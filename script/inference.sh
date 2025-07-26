@@ -1,13 +1,13 @@
 export MVTEC_NAME="hazelnut"
 export MVTEC_ANOMALY_NAME="hole"
 
-export MODEL_NAME="/models/stable-diffusion-v1-5"
-export LORA_WEIGHTS="/all_generate/$MVTEC_NAME/$MVTEC_ANOMALY_NAME/checkpoint-5000"
-export OUTPUT_DIR="/generate_data/$MVTEC_NAME/$MVTEC_ANOMALY_NAME"
+export MODEL_NAME="models/stable-diffusion-v1-5"
+export LORA_WEIGHTS="all_generate/$MVTEC_NAME/$MVTEC_ANOMALY_NAME/checkpoint-1000"
+export OUTPUT_DIR="generate_data/$MVTEC_NAME/$MVTEC_ANOMALY_NAME"
 
-rm -rf /generate_data/
+rm -rf generate_data/
 
-python /inference.py \
+python inference.py \
     --model_name=$MODEL_NAME \
     --lora_weights=$LORA_WEIGHTS \
     --mvtec_name=$MVTEC_NAME \

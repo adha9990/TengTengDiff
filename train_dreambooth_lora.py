@@ -1375,10 +1375,10 @@ def main(args):
                 # Sample noise that we'll add to the latents
                 noise_blend = torch.randn_like(model_input_blend)
                 noise_fg = torch.randn_like(model_input_fg)
-                
+
                 # For now, use blend version (will be combined with fg later)
                 noise = noise_blend
-                
+
                 bsz, channels, height, width = model_input.shape
                 # Sample a random timestep for each image
                 timesteps = torch.randint(

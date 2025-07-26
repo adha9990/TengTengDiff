@@ -26,7 +26,7 @@ accelerate launch train_dreambooth_lora.py \
     --learning_rate=2e-5 \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \
-    --max_train_steps=100 \
+    --max_train_steps=1000 \
     --rank 32 \
     --seed 32 \
     --train_text_encoder \
