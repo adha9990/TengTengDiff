@@ -29,6 +29,7 @@ import torch.nn.functional as F
 import torch.utils.checkpoint
 import transformers
 from accelerate import Accelerator
+from simple_feature_interaction import compute_feature_interaction_loss, compute_mask_alignment_loss
 from accelerate.logging import get_logger
 from accelerate.utils import ProjectConfiguration, set_seed
 from huggingface_hub import create_repo, upload_folder
@@ -1280,6 +1281,7 @@ def main(args):
             unet, optimizer, train_dataloader, lr_scheduler
         )
 
+    
     # We need to recalculate our total training steps as the size of the training dataloader may have changed.
     num_update_steps_per_epoch = math.ceil(len(train_dataloader) / args.gradient_accumulation_steps)
     if args.max_train_steps is None:
@@ -1369,41 +1371,48 @@ def main(args):
                     model_input_blend = pixel_value_blends
                     model_input_fg = pixel_value_fgs
 
-                # For now, use blend version (will be combined with fg later)
-                model_input = model_input_blend
+                # Combine both inputs for batch processing
+                model_input = torch.cat([model_input_blend, model_input_fg], dim=0)
 
                 # Sample noise that we'll add to the latents
                 noise_blend = torch.randn_like(model_input_blend)
                 noise_fg = torch.randn_like(model_input_fg)
 
-                # For now, use blend version (will be combined with fg later)
-                noise = noise_blend
+                # Combine noise
+                noise = torch.cat([noise_blend, noise_fg], dim=0)
 
-                bsz, channels, height, width = model_input.shape
+                bsz, channels, height, width = model_input_blend.shape
                 # Sample a random timestep for each image
                 timesteps = torch.randint(
                     0, noise_scheduler.config.num_train_timesteps, (bsz,), device=model_input.device
                 )
                 timesteps = timesteps.long()
+                # Duplicate timesteps for both blend and fg
+                timesteps = torch.cat([timesteps, timesteps], dim=0)
 
                 # Add noise to the model input according to the noise magnitude at each timestep
                 # (this is the forward diffusion process)
-                noisy_model_input_blend = noise_scheduler.add_noise(model_input_blend, noise_blend, timesteps)
-                noisy_model_input_fg = noise_scheduler.add_noise(model_input_fg, noise_fg, timesteps)
-                
-                # For now, use blend version (will be combined with fg later)
-                noisy_model_input = noisy_model_input_blend
+                noisy_model_input = noise_scheduler.add_noise(model_input, noise, timesteps)
 
                 # Get the text embedding for conditioning
                 if args.pre_compute_text_embeddings:
-                    encoder_hidden_states = batch["input_id_blends"]
+                    encoder_hidden_states_blend = batch["input_id_blends"]
+                    encoder_hidden_states_fg = batch["input_id_fgs"]
+                    encoder_hidden_states = torch.cat([encoder_hidden_states_blend, encoder_hidden_states_fg], dim=0)
                 else:
-                    encoder_hidden_states = encode_prompt(
+                    encoder_hidden_states_blend = encode_prompt(
                         text_encoder,
                         batch["input_id_blends"],
                         batch["attention_mask_blend"],
                         text_encoder_use_attention_mask=args.text_encoder_use_attention_mask,
                     )
+                    encoder_hidden_states_fg = encode_prompt(
+                        text_encoder,
+                        batch["input_id_fgs"],
+                        batch["attention_mask_fg"],
+                        text_encoder_use_attention_mask=args.text_encoder_use_attention_mask,
+                    )
+                    encoder_hidden_states = torch.cat([encoder_hidden_states_blend, encoder_hidden_states_fg], dim=0)
 
                 if unwrap_model(unet).config.in_channels == channels * 2:
                     noisy_model_input = torch.cat([noisy_model_input, noisy_model_input], dim=1)
@@ -1450,7 +1459,27 @@ def main(args):
                     # Add the prior loss to the instance loss.
                     loss = loss + args.prior_loss_weight * prior_loss
                 else:
-                    loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                    # Split predictions and targets for blend and fg
+                    model_pred_blend, model_pred_fg = torch.chunk(model_pred, 2, dim=0)
+                    target_blend, target_fg = torch.chunk(target, 2, dim=0)
+                    
+                    # Compute losses for both
+                    loss_blend = F.mse_loss(model_pred_blend.float(), target_blend.float(), reduction="mean")
+                    loss_fg = F.mse_loss(model_pred_fg.float(), target_fg.float(), reduction="mean")
+                    
+                    # Feature interaction learning
+                    interaction_loss = compute_feature_interaction_loss(
+                        model_input_blend, model_input_fg,
+                        noise_blend, noise_fg
+                    )
+                    
+                    # Mask alignment loss
+                    alignment_loss = compute_mask_alignment_loss(
+                        model_pred_blend, model_pred_fg
+                    )
+                    
+                    # Compute total loss
+                    loss = (loss_blend + loss_fg) / 2.0 + 0.1 * interaction_loss + 0.05 * alignment_loss
 
                 accelerator.backward(loss)
                 if accelerator.sync_gradients:

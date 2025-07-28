@@ -12,7 +12,7 @@ python inference.py \
     --lora_weights=$LORA_WEIGHTS \
     --mvtec_name=$MVTEC_NAME \
     --mvtec_aomaly_name=$MVTEC_ANOMALY_NAME \
-    --num_images=10 \
+    --num_images=100 \
     --prompt_blend="a vfx with sks" \
     --prompt_fg="sks" \
     --num_inference_steps=100 \

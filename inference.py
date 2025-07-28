@@ -1,5 +1,6 @@
 import argparse
-from diffusers import DiffusionPipeline, DPMSolverMultistepScheduler
+from diffusers import DPMSolverMultistepScheduler
+from pipeline_stable_diffusion_dual import StableDiffusionDualPipeline
 
 import torch
 import os
@@ -39,7 +40,7 @@ def main(args):
         level=logging.INFO,
     )
 
-    pipe = DiffusionPipeline.from_pretrained(args.model_name, torch_dtype=torch.float32)
+    pipe = StableDiffusionDualPipeline.from_pretrained(args.model_name, torch_dtype=torch.float32)
 
     scheduler_args = {}
     if "variance_type" in pipe.scheduler.config:
@@ -65,15 +66,17 @@ def main(args):
     progress_bar.set_description("Generating images")
 
     pipeline_args = {
-        "prompt": args.prompt_blend,
+        "prompt_blend": args.prompt_blend,
+        "prompt_fg": args.prompt_fg,
         "num_inference_steps": args.num_inference_steps,
     }
 
     for i in range(cnt, args.num_images):
-        image_blend = pipe(**pipeline_args, guidance_scale=2.5).images[0]
+        result = pipe(**pipeline_args, guidance_scale=2.5)
+        image_blend, image_fg = result.images
 
         image_blend.save(os.path.join(img_path, f"{i}.png"))
-        # image_fg.save(os.path.join(fg_path, f'{i}.png'))
+        image_fg.save(os.path.join(fg_path, f'{i}.png'))
 
         progress_bar.update(1)
 
