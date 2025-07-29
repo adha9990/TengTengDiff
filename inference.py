@@ -19,17 +19,53 @@ def parse_args():
     parser.add_argument("--prompt_fg", type=str, default="sks")
     parser.add_argument("--num_inference_steps", type=int, default=25)
     parser.add_argument("--output_dir", type=str, required=True)
-    parser.add_argument("--enable_xformers", action="store_true", help="Enable xformers for memory efficiency")
-    parser.add_argument("--use_fp16", action="store_true", help="Use FP16 mixed precision")
-    parser.add_argument("--enable_cpu_offload", action="store_true", help="Enable CPU offload for memory savings (very slow)")
-    parser.add_argument("--enable_vae_slicing", action="store_true", help="Enable VAE slicing for memory efficiency")
-    parser.add_argument("--enable_vae_tiling", action="store_true", help="Enable VAE tiling for huge image generation")
-    parser.add_argument("--enable_model_cpu_offload", action="store_true", help="Enable model CPU offload (faster than sequential)")
-    parser.add_argument("--disable_safety_checker", action="store_true", help="Disable NSFW safety checker")
+    parser.add_argument(
+        "--enable_xformers",
+        action="store_true",
+        help="Enable xformers for memory efficiency",
+    )
+    parser.add_argument(
+        "--use_fp16", action="store_true", help="Use FP16 mixed precision"
+    )
+    parser.add_argument(
+        "--enable_cpu_offload",
+        action="store_true",
+        help="Enable CPU offload for memory savings (very slow)",
+    )
+    parser.add_argument(
+        "--enable_vae_slicing",
+        action="store_true",
+        help="Enable VAE slicing for memory efficiency",
+    )
+    parser.add_argument(
+        "--enable_vae_tiling",
+        action="store_true",
+        help="Enable VAE tiling for huge image generation",
+    )
+    parser.add_argument(
+        "--enable_model_cpu_offload",
+        action="store_true",
+        help="Enable model CPU offload (faster than sequential)",
+    )
+    parser.add_argument(
+        "--disable_safety_checker",
+        action="store_true",
+        help="Disable NSFW safety checker",
+    )
+    parser.add_argument(
+        "--seed", type=int, default=None, help="Random seed for reproducible generation"
+    )
     return parser.parse_args()
 
 
 def main(args):
+    # Set random seed for reproducibility
+    if args.seed is not None:
+        torch.manual_seed(args.seed)
+        if torch.cuda.is_available():
+            torch.cuda.manual_seed_all(args.seed)
+        logging.info(f"Set random seed to {args.seed}")
+
     target_path = args.output_dir
 
     img_path = os.path.join(target_path, "image")
@@ -114,9 +150,18 @@ def main(args):
         "num_inference_steps": args.num_inference_steps,
     }
 
+    # Create generator for seed if specified
+    generator = None
+    if args.seed is not None:
+        generator = torch.Generator(device="cuda")
+        generator.manual_seed(args.seed)
+
     for i in range(cnt, args.num_images):
-        result = pipe(**pipeline_args, guidance_scale=2.5)
-        image_blend, image_fg = result.images
+        # Use the same seed for each generation if specified
+        if generator is not None:
+            generator.manual_seed(
+                args.seed + i
+            )  # Add i to get different images with predictable seeds
 
         image_blend.save(os.path.join(img_path, f"{i}.png"))
         image_fg.save(os.path.join(fg_path, f"{i}.png"))

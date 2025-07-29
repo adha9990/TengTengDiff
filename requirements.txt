@@ -9,3 +9,4 @@ bitsandbytes
 tensorboard
 torch-tb-profiler
 einops
+diffusers
