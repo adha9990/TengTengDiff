@@ -19,6 +19,13 @@ def parse_args():
     parser.add_argument("--prompt_fg", type=str, default="sks")
     parser.add_argument("--num_inference_steps", type=int, default=25)
     parser.add_argument("--output_dir", type=str, required=True)
+    parser.add_argument("--enable_xformers", action="store_true", help="Enable xformers for memory efficiency")
+    parser.add_argument("--use_fp16", action="store_true", help="Use FP16 mixed precision")
+    parser.add_argument("--enable_cpu_offload", action="store_true", help="Enable CPU offload for memory savings (very slow)")
+    parser.add_argument("--enable_vae_slicing", action="store_true", help="Enable VAE slicing for memory efficiency")
+    parser.add_argument("--enable_vae_tiling", action="store_true", help="Enable VAE tiling for huge image generation")
+    parser.add_argument("--enable_model_cpu_offload", action="store_true", help="Enable model CPU offload (faster than sequential)")
+    parser.add_argument("--disable_safety_checker", action="store_true", help="Disable NSFW safety checker")
     return parser.parse_args()
 
 
@@ -40,7 +47,12 @@ def main(args):
         level=logging.INFO,
     )
 
-    pipe = StableDiffusionDualPipeline.from_pretrained(args.model_name, torch_dtype=torch.float32)
+    # 選擇資料類型
+    dtype = torch.float16 if args.use_fp16 else torch.float32
+    
+    pipe = StableDiffusionDualPipeline.from_pretrained(
+        args.model_name, torch_dtype=dtype
+    )
 
     scheduler_args = {}
     if "variance_type" in pipe.scheduler.config:
@@ -55,10 +67,41 @@ def main(args):
         pipe.scheduler.config, **scheduler_args
     )
 
-    pipe = pipe.to("cuda")
-    pipe.set_progress_bar_config(disable=True)
-
+    # 載入 LoRA 權重
     pipe.load_lora_weights(args.lora_weights)
+    
+    # 禁用安全檢查器（如果需要）
+    if args.disable_safety_checker:
+        pipe.safety_checker = None
+        pipe.requires_safety_checker = False
+        logging.info("Disabled NSFW safety checker")
+
+    # 啟用記憶體優化選項
+    if args.enable_xformers:
+        try:
+            pipe.enable_xformers_memory_efficient_attention()
+            logging.info("Enabled xformers memory efficient attention")
+        except Exception as e:
+            logging.warning(f"Could not enable xformers: {e}")
+    
+    # 啟用 VAE 優化
+    if args.enable_vae_slicing:
+        pipe.enable_vae_slicing()
+        logging.info("Enabled VAE slicing for memory efficiency")
+    
+    if args.enable_vae_tiling:
+        pipe.enable_vae_tiling()
+        logging.info("Enabled VAE tiling for huge image generation")
+
+    # 設定 GPU 或 CPU offload
+    if args.enable_cpu_offload:
+        pipe.enable_sequential_cpu_offload()
+        logging.info("Enabled sequential CPU offload (very slow)")
+    elif args.enable_model_cpu_offload:
+        pipe.enable_model_cpu_offload()
+        logging.info("Enabled model CPU offload")
+    else:
+        pipe = pipe.to("cuda")
 
     pipe.set_progress_bar_config(disable=True)
 
@@ -76,7 +119,7 @@ def main(args):
         image_blend, image_fg = result.images
 
         image_blend.save(os.path.join(img_path, f"{i}.png"))
-        image_fg.save(os.path.join(fg_path, f'{i}.png'))
+        image_fg.save(os.path.join(fg_path, f"{i}.png"))
 
         progress_bar.update(1)
 
