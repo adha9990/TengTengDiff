@@ -67,13 +67,6 @@ def parse_args(input_args=None):
         help="MVTec category name (e.g., hazelnut, bottle, cable, etc.)",
     )
     parser.add_argument(
-        "--mvtec_anamaly_name",
-        type=str,
-        default=None,
-        required=True,
-        help="MVTec anomaly type name (e.g., hole, scratch, etc.)",
-    )
-    parser.add_argument(
         "--validation_prompt",
         type=str,
         default=None,
@@ -333,15 +326,6 @@ def parse_args(input_args=None):
         help=("The dimension of the LoRA update matrices."),
     )
     parser.add_argument("--lora_dropout", type=float, default=0.0, help="Dropout probability for LoRA layers")
-    parser.add_argument(
-        "--image_interpolation_mode",
-        type=str,
-        default="lanczos",
-        choices=[
-            f.lower() for f in dir(transforms.InterpolationMode) if not f.startswith("__") and not f.endswith("__")
-        ],
-        help="The image interpolation method to use for resizing images.",
-    )
     parser.add_argument(
         "--num_inference_steps",
         type=int,

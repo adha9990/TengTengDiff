@@ -253,7 +253,14 @@ class DreamBoothLoRATrainer:
             lora_alpha=self.args.rank,
             lora_dropout=self.args.lora_dropout,
             init_lora_weights="gaussian",
-            target_modules=["to_k", "to_q", "to_v", "to_out.0", "add_k_proj", "add_v_proj"],
+            target_modules=[
+                "to_k",
+                "to_q",
+                "to_v",
+                "to_out.0",
+                "add_k_proj",
+                "add_v_proj",
+            ],
         )
         unet.add_adapter(unet_lora_config)
 
@@ -289,8 +296,10 @@ class DreamBoothLoRATrainer:
                             get_peft_model_state_dict(model)
                         )
                     elif isinstance(model, type(unwrap_model(text_encoder))):
-                        text_encoder_lora_layers_to_save = convert_state_dict_to_diffusers(
-                            get_peft_model_state_dict(model)
+                        text_encoder_lora_layers_to_save = (
+                            convert_state_dict_to_diffusers(
+                                get_peft_model_state_dict(model)
+                            )
                         )
                     else:
                         raise ValueError(f"unexpected save model: {model.__class__}")
@@ -318,8 +327,8 @@ class DreamBoothLoRATrainer:
                 else:
                     raise ValueError(f"unexpected save model: {model.__class__}")
 
-            lora_state_dict, network_alphas = StableDiffusionLoraLoaderMixin.lora_state_dict(
-                input_dir
+            lora_state_dict, network_alphas = (
+                StableDiffusionLoraLoaderMixin.lora_state_dict(input_dir)
             )
 
             unet_state_dict = {
@@ -387,7 +396,9 @@ class DreamBoothLoRATrainer:
                 ).repo_id
 
         # Load models and tokenizer
-        tokenizer, text_encoder, vae, unet, noise_scheduler = self.setup_models_and_tokenizer()
+        tokenizer, text_encoder, vae, unet, noise_scheduler = (
+            self.setup_models_and_tokenizer()
+        )
 
         # Setup LoRA
         self.setup_lora(unet, text_encoder)
@@ -422,7 +433,9 @@ class DreamBoothLoRATrainer:
                     )
                 unet.enable_xformers_memory_efficient_attention()
             else:
-                raise ValueError("xformers is not available. Make sure it is installed correctly")
+                raise ValueError(
+                    "xformers is not available. Make sure it is installed correctly"
+                )
 
         # Enable gradient checkpointing if requested
         if self.args.gradient_checkpointing:
@@ -489,7 +502,9 @@ class DreamBoothLoRATrainer:
             def compute_text_embeddings(prompt):
                 with torch.no_grad():
                     text_inputs = tokenize_prompt(
-                        tokenizer, prompt, tokenizer_max_length=self.args.tokenizer_max_length
+                        tokenizer,
+                        prompt,
+                        tokenizer_max_length=self.args.tokenizer_max_length,
                     )
                     prompt_embeds = encode_prompt(
                         text_encoder,
@@ -500,7 +515,9 @@ class DreamBoothLoRATrainer:
 
                 return prompt_embeds
 
-            pre_computed_encoder_hidden_states = compute_text_embeddings(self.args.instance_prompt)
+            pre_computed_encoder_hidden_states = compute_text_embeddings(
+                self.args.instance_prompt
+            )
             validation_prompt_negative_prompt_embeds = compute_text_embeddings("")
 
             if self.args.validation_prompt is not None:
@@ -511,8 +528,8 @@ class DreamBoothLoRATrainer:
                 validation_prompt_encoder_hidden_states = None
 
             if self.args.class_prompt is not None:
-                pre_computed_class_prompt_encoder_hidden_states = compute_text_embeddings(
-                    self.args.class_prompt
+                pre_computed_class_prompt_encoder_hidden_states = (
+                    compute_text_embeddings(self.args.class_prompt)
                 )
             else:
                 pre_computed_class_prompt_encoder_hidden_states = None
@@ -532,7 +549,9 @@ class DreamBoothLoRATrainer:
         train_dataset = DreamBoothDataset(
             instance_data_root=self.args.instance_data_dir,
             instance_prompt=self.args.instance_prompt,
-            class_data_root=self.args.class_data_dir if self.args.with_prior_preservation else None,
+            class_data_root=(
+                self.args.class_data_dir if self.args.with_prior_preservation else None
+            ),
             class_prompt=self.args.class_prompt,
             class_num=self.args.num_class_images,
             tokenizer=tokenizer,
@@ -542,26 +561,29 @@ class DreamBoothLoRATrainer:
             class_prompt_encoder_hidden_states=pre_computed_class_prompt_encoder_hidden_states,
             tokenizer_max_length=self.args.tokenizer_max_length,
             mvtec_name=self.args.mvtec_name,
-            mvtec_anamaly_name=self.args.mvtec_anamaly_name,
-            image_interpolation_mode=self.args.image_interpolation_mode,
         )
 
         train_dataloader = torch.utils.data.DataLoader(
             train_dataset,
             batch_size=self.args.train_batch_size,
             shuffle=True,
-            collate_fn=lambda examples: collate_fn(examples, self.args.with_prior_preservation),
+            collate_fn=lambda examples: collate_fn(
+                examples, self.args.with_prior_preservation
+            ),
             num_workers=self.args.dataloader_num_workers,
         )
 
         # Scheduler and math around the number of training steps
-        num_warmup_steps_for_scheduler = self.args.lr_warmup_steps * self.accelerator.num_processes
+        num_warmup_steps_for_scheduler = (
+            self.args.lr_warmup_steps * self.accelerator.num_processes
+        )
         if self.args.max_train_steps is None:
             len_train_dataloader_after_sharding = math.ceil(
                 len(train_dataloader) / self.accelerator.num_processes
             )
             num_update_steps_per_epoch = math.ceil(
-                len_train_dataloader_after_sharding / self.args.gradient_accumulation_steps
+                len_train_dataloader_after_sharding
+                / self.args.gradient_accumulation_steps
             )
             num_training_steps_for_scheduler = (
                 self.args.num_train_epochs
@@ -569,7 +591,9 @@ class DreamBoothLoRATrainer:
                 * num_update_steps_per_epoch
             )
         else:
-            num_training_steps_for_scheduler = self.args.max_train_steps * self.accelerator.num_processes
+            num_training_steps_for_scheduler = (
+                self.args.max_train_steps * self.accelerator.num_processes
+            )
 
         lr_scheduler = get_scheduler(
             self.args.lr_scheduler,
@@ -582,8 +606,10 @@ class DreamBoothLoRATrainer:
 
         # Prepare everything with our `accelerator`.
         if self.args.train_text_encoder:
-            unet, text_encoder, optimizer, train_dataloader, lr_scheduler = self.accelerator.prepare(
-                unet, text_encoder, optimizer, train_dataloader, lr_scheduler
+            unet, text_encoder, optimizer, train_dataloader, lr_scheduler = (
+                self.accelerator.prepare(
+                    unet, text_encoder, optimizer, train_dataloader, lr_scheduler
+                )
             )
         else:
             unet, optimizer, train_dataloader, lr_scheduler = self.accelerator.prepare(
@@ -595,8 +621,13 @@ class DreamBoothLoRATrainer:
             len(train_dataloader) / self.args.gradient_accumulation_steps
         )
         if self.args.max_train_steps is None:
-            self.args.max_train_steps = self.args.num_train_epochs * num_update_steps_per_epoch
-            if num_training_steps_for_scheduler != self.args.max_train_steps * self.accelerator.num_processes:
+            self.args.max_train_steps = (
+                self.args.num_train_epochs * num_update_steps_per_epoch
+            )
+            if (
+                num_training_steps_for_scheduler
+                != self.args.max_train_steps * self.accelerator.num_processes
+            ):
                 logger.warning(
                     f"The length of the 'train_dataloader' after 'accelerator.prepare' ({len(train_dataloader)}) does not match "
                     f"the expected length ({len_train_dataloader_after_sharding}) when the learning rate scheduler was created. "
@@ -604,14 +635,18 @@ class DreamBoothLoRATrainer:
                 )
 
         # Afterwards we recalculate our number of training epochs
-        self.args.num_train_epochs = math.ceil(self.args.max_train_steps / num_update_steps_per_epoch)
+        self.args.num_train_epochs = math.ceil(
+            self.args.max_train_steps / num_update_steps_per_epoch
+        )
 
         # We need to initialize the trackers we use, and also store our configuration.
         # The trackers initializes automatically on the main process.
         if self.accelerator.is_main_process:
             tracker_config = vars(copy.deepcopy(self.args))
             tracker_config.pop("validation_images")
-            self.accelerator.init_trackers("dreambooth-lora-stage1", config=tracker_config)
+            self.accelerator.init_trackers(
+                "dreambooth-lora-stage1", config=tracker_config
+            )
 
         # Train!
         total_batch_size = (
@@ -624,11 +659,15 @@ class DreamBoothLoRATrainer:
         logger.info(f"  Num examples = {len(train_dataset)}")
         logger.info(f"  Num batches each epoch = {len(train_dataloader)}")
         logger.info(f"  Num Epochs = {self.args.num_train_epochs}")
-        logger.info(f"  Instantaneous batch size per device = {self.args.train_batch_size}")
+        logger.info(
+            f"  Instantaneous batch size per device = {self.args.train_batch_size}"
+        )
         logger.info(
             f"  Total train batch size (w. parallel, distributed & accumulation) = {total_batch_size}"
         )
-        logger.info(f"  Gradient Accumulation steps = {self.args.gradient_accumulation_steps}")
+        logger.info(
+            f"  Gradient Accumulation steps = {self.args.gradient_accumulation_steps}"
+        )
         logger.info(f"  Total optimization steps = {self.args.max_train_steps}")
         global_step = 0
         first_epoch = 0
@@ -688,13 +727,18 @@ class DreamBoothLoRATrainer:
                     bsz, channels, height, width = model_input.shape
                     # Sample a random timestep for each image
                     timesteps = torch.randint(
-                        0, noise_scheduler.config.num_train_timesteps, (bsz,), device=model_input.device
+                        0,
+                        noise_scheduler.config.num_train_timesteps,
+                        (bsz,),
+                        device=model_input.device,
                     )
                     timesteps = timesteps.long()
 
                     # Add noise to the model input according to the noise magnitude at each timestep
                     # (this is the forward diffusion process)
-                    noisy_model_input = noise_scheduler.add_noise(model_input, noise, timesteps)
+                    noisy_model_input = noise_scheduler.add_noise(
+                        model_input, noise, timesteps
+                    )
 
                     # Get the text embedding for conditioning
                     if self.args.pre_compute_text_embeddings:
@@ -707,8 +751,13 @@ class DreamBoothLoRATrainer:
                             text_encoder_use_attention_mask=self.args.text_encoder_use_attention_mask,
                         )
 
-                    if self.accelerator.unwrap_model(unet).config.in_channels == channels * 2:
-                        noisy_model_input = torch.cat([noisy_model_input, noisy_model_input], dim=1)
+                    if (
+                        self.accelerator.unwrap_model(unet).config.in_channels
+                        == channels * 2
+                    ):
+                        noisy_model_input = torch.cat(
+                            [noisy_model_input, noisy_model_input], dim=1
+                        )
 
                     if self.args.class_labels_conditioning == "timesteps":
                         class_labels = timesteps
@@ -734,9 +783,13 @@ class DreamBoothLoRATrainer:
                     if noise_scheduler.config.prediction_type == "epsilon":
                         target = noise
                     elif noise_scheduler.config.prediction_type == "v_prediction":
-                        target = noise_scheduler.get_velocity(model_input, noise, timesteps)
+                        target = noise_scheduler.get_velocity(
+                            model_input, noise, timesteps
+                        )
                     else:
-                        raise ValueError(f"Unknown prediction type {noise_scheduler.config.prediction_type}")
+                        raise ValueError(
+                            f"Unknown prediction type {noise_scheduler.config.prediction_type}"
+                        )
 
                     if self.args.with_prior_preservation:
                         # Chunk the noise and model_pred into two parts and compute the loss on each part separately.
@@ -744,21 +797,29 @@ class DreamBoothLoRATrainer:
                         target, target_prior = torch.chunk(target, 2, dim=0)
 
                         # Compute instance loss
-                        loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                        loss = F.mse_loss(
+                            model_pred.float(), target.float(), reduction="mean"
+                        )
 
                         # Compute prior loss
                         prior_loss = F.mse_loss(
-                            model_pred_prior.float(), target_prior.float(), reduction="mean"
+                            model_pred_prior.float(),
+                            target_prior.float(),
+                            reduction="mean",
                         )
 
                         # Add the prior loss to the instance loss.
                         loss = loss + self.args.prior_loss_weight * prior_loss
                     else:
-                        loss = F.mse_loss(model_pred.float(), target.float(), reduction="mean")
+                        loss = F.mse_loss(
+                            model_pred.float(), target.float(), reduction="mean"
+                        )
 
                     self.accelerator.backward(loss)
                     if self.accelerator.sync_gradients:
-                        self.accelerator.clip_grad_norm_(params_to_optimize, self.args.max_grad_norm)
+                        self.accelerator.clip_grad_norm_(
+                            params_to_optimize, self.args.max_grad_norm
+                        )
                     optimizer.step()
                     lr_scheduler.step()
                     optimizer.zero_grad()
@@ -773,18 +834,31 @@ class DreamBoothLoRATrainer:
                             # _before_ saving state, check if this save would set us over the `checkpoints_total_limit`
                             if self.args.checkpoints_total_limit is not None:
                                 checkpoints = os.listdir(self.args.output_dir)
-                                checkpoints = [d for d in checkpoints if d.startswith("checkpoint")]
-                                checkpoints = sorted(checkpoints, key=lambda x: int(x.split("-")[1]))
+                                checkpoints = [
+                                    d for d in checkpoints if d.startswith("checkpoint")
+                                ]
+                                checkpoints = sorted(
+                                    checkpoints, key=lambda x: int(x.split("-")[1])
+                                )
 
                                 # before we save the new checkpoint, we need to have at _most_ `checkpoints_total_limit - 1` checkpoints
-                                if len(checkpoints) >= self.args.checkpoints_total_limit:
-                                    num_to_remove = len(checkpoints) - self.args.checkpoints_total_limit + 1
+                                if (
+                                    len(checkpoints)
+                                    >= self.args.checkpoints_total_limit
+                                ):
+                                    num_to_remove = (
+                                        len(checkpoints)
+                                        - self.args.checkpoints_total_limit
+                                        + 1
+                                    )
                                     removing_checkpoints = checkpoints[0:num_to_remove]
 
                                     logger.info(
                                         f"{len(checkpoints)} checkpoints already exist, removing {len(removing_checkpoints)} checkpoints"
                                     )
-                                    logger.info(f"removing checkpoints: {', '.join(removing_checkpoints)}")
+                                    logger.info(
+                                        f"removing checkpoints: {', '.join(removing_checkpoints)}"
+                                    )
 
                                     for removing_checkpoint in removing_checkpoints:
                                         removing_checkpoint = os.path.join(
@@ -792,11 +866,16 @@ class DreamBoothLoRATrainer:
                                         )
                                         shutil.rmtree(removing_checkpoint)
 
-                            save_path = os.path.join(self.args.output_dir, f"checkpoint-{global_step}")
+                            save_path = os.path.join(
+                                self.args.output_dir, f"checkpoint-{global_step}"
+                            )
                             self.accelerator.save_state(save_path)
                             logger.info(f"Saved state to {save_path}")
 
-                logs = {"loss": loss.detach().item(), "lr": lr_scheduler.get_last_lr()[0]}
+                logs = {
+                    "loss": loss.detach().item(),
+                    "lr": lr_scheduler.get_last_lr()[0],
+                }
                 progress_bar.set_postfix(**logs)
                 self.accelerator.log(logs, step=global_step)
 
@@ -849,7 +928,9 @@ class DreamBoothLoRATrainer:
             unet = self.accelerator.unwrap_model(unet)
             unet = unet.to(torch.float32)
 
-            unet_lora_state_dict = convert_state_dict_to_diffusers(get_peft_model_state_dict(unet))
+            unet_lora_state_dict = convert_state_dict_to_diffusers(
+                get_peft_model_state_dict(unet)
+            )
 
             if self.args.train_text_encoder:
                 text_encoder = self.accelerator.unwrap_model(text_encoder)
@@ -875,7 +956,9 @@ class DreamBoothLoRATrainer:
             )
 
             # load attention processors
-            pipeline.load_lora_weights(self.args.output_dir, weight_name="pytorch_lora_weights.safetensors")
+            pipeline.load_lora_weights(
+                self.args.output_dir, weight_name="pytorch_lora_weights.safetensors"
+            )
 
             # run inference
             images = []

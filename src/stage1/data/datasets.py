@@ -26,42 +26,47 @@ class DreamBoothDataset(Dataset):
         size=512,
         center_crop=False,
         encoder_hidden_states=None,
-        class_prompt_encoder_hidden_states=None,
+        instance_prompt_encoder_hidden_states=None,
         tokenizer_max_length=None,
         mvtec_name=None,
-        mvtec_anamaly_name=None,
-        image_interpolation_mode="lanczos",
     ):
         self.size = size
         self.center_crop = center_crop
         self.tokenizer = tokenizer
         self.encoder_hidden_states = encoder_hidden_states
-        self.class_prompt_encoder_hidden_states = class_prompt_encoder_hidden_states
+        self.instance_prompt_encoder_hidden_states = (
+            instance_prompt_encoder_hidden_states
+        )
         self.tokenizer_max_length = tokenizer_max_length
 
-        self.instance_data_root = Path(instance_data_root)
-        if not self.instance_data_root.exists():
-            raise ValueError(f"Instance images root doesn't exist: {instance_data_root}")
+        self.instance_data_root = instance_data_root
+        self.mvtec_name = mvtec_name
 
-        # For stage 1, we use good (normal) images from the training set
         self.instance_images_path = []
-        if mvtec_name:
-            # MVTec-AD specific data loading for stage 1
-            mvtec_path = self.instance_data_root / mvtec_name / "train" / "good"
-            if mvtec_path.exists():
-                self.instance_images_path = list(mvtec_path.glob("*.png"))
-                self.instance_images_path.extend(list(mvtec_path.glob("*.jpg")))
-                self.instance_images_path.extend(list(mvtec_path.glob("*.bmp")))
-            else:
-                # Fallback to standard instance data directory
-                self.instance_images_path = list(self.instance_data_root.iterdir())
-        else:
-            # Standard DreamBooth dataset
-            self.instance_images_path = list(self.instance_data_root.iterdir())
-
+        for type_name in os.listdir(self.instance_data_root):
+            if type_name not in [mvtec_name]:
+                continue
+            if not os.path.isdir(
+                os.path.join(self.instance_data_root, type_name, "train")
+            ):
+                continue
+            # For stage 1, we only use 'good' samples from train directory
+            good_path = os.path.join(self.instance_data_root, type_name, "train", "good")
+            if os.path.exists(good_path):
+                file_names = os.listdir(good_path)
+                file_names.sort()
+                for name in file_names:
+                    if name.endswith(('.png', '.jpg', '.bmp')):
+                        self.instance_images_path.append(
+                            os.path.join(
+                                self.instance_data_root,
+                                type_name,
+                                "train",
+                                "good",
+                                name,
+                            )
+                        )
         self.num_instance_images = len(self.instance_images_path)
-        if self.num_instance_images == 0:
-            raise ValueError(f"No instance images found in {self.instance_data_root}")
 
         self.instance_prompt = instance_prompt
         self._length = self.num_instance_images
@@ -79,18 +84,38 @@ class DreamBoothDataset(Dataset):
         else:
             self.class_data_root = None
 
-        interpolation = getattr(transforms.InterpolationMode, image_interpolation_mode.upper(), None)
-        if interpolation is None:
-            raise ValueError(f"Unsupported interpolation mode {image_interpolation_mode=}.")
-
-        self.image_transforms = transforms.Compose(
-            [
-                transforms.Resize(size, interpolation=interpolation),
-                transforms.CenterCrop(size) if center_crop else transforms.RandomCrop(size),
-                transforms.ToTensor(),
-                transforms.Normalize([0.5], [0.5]),
-            ]
-        )
+        if type_name == "cable":
+            self.image_transforms = transforms.Compose(
+                [
+                    transforms.Resize(
+                        size, interpolation=transforms.InterpolationMode.BILINEAR
+                    ),
+                    (
+                        transforms.CenterCrop(size)
+                        if center_crop
+                        else transforms.RandomCrop(size)
+                    ),
+                    transforms.ToTensor(),
+                    transforms.Normalize([0.5], [0.5]),
+                ]
+            )
+        else:
+            self.image_transforms = transforms.Compose(
+                [
+                    transforms.RandomHorizontalFlip(0.5),
+                    transforms.RandomVerticalFlip(0.5),
+                    transforms.Resize(
+                        size, interpolation=transforms.InterpolationMode.BILINEAR
+                    ),
+                    (
+                        transforms.CenterCrop(size)
+                        if center_crop
+                        else transforms.RandomCrop(size)
+                    ),
+                    transforms.ToTensor(),
+                    transforms.Normalize([0.5], [0.5]),
+                ]
+            )
 
     def __len__(self):
         return self._length
@@ -104,14 +129,13 @@ class DreamBoothDataset(Dataset):
             instance_image = instance_image.convert("RGB")
         example["instance_images"] = self.image_transforms(instance_image)
 
-        if self.encoder_hidden_states is not None:
-            example["instance_prompt_ids"] = self.encoder_hidden_states
-        else:
-            text_inputs = tokenize_prompt(
-                self.tokenizer, self.instance_prompt, tokenizer_max_length=self.tokenizer_max_length
-            )
-            example["instance_prompt_ids"] = text_inputs.input_ids
-            example["instance_attention_mask"] = text_inputs.attention_mask
+        text_inputs = tokenize_prompt(
+            self.tokenizer,
+            self.instance_prompt,
+            tokenizer_max_length=self.tokenizer_max_length,
+        )
+        example["instance_prompt_ids"] = text_inputs.input_ids
+        example["instance_attention_mask"] = text_inputs.attention_mask
 
         if self.class_data_root:
             class_image = Image.open(self.class_images_path[index % self.num_class_images])
@@ -121,11 +145,13 @@ class DreamBoothDataset(Dataset):
                 class_image = class_image.convert("RGB")
             example["class_images"] = self.image_transforms(class_image)
 
-            if self.class_prompt_encoder_hidden_states is not None:
-                example["class_prompt_ids"] = self.class_prompt_encoder_hidden_states
+            if self.instance_prompt_encoder_hidden_states is not None:
+                example["class_prompt_ids"] = self.instance_prompt_encoder_hidden_states
             else:
                 class_text_inputs = tokenize_prompt(
-                    self.tokenizer, self.class_prompt, tokenizer_max_length=self.tokenizer_max_length
+                    self.tokenizer,
+                    self.class_prompt,
+                    tokenizer_max_length=self.tokenizer_max_length,
                 )
                 example["class_prompt_ids"] = class_text_inputs.input_ids
                 example["class_attention_mask"] = class_text_inputs.attention_mask
