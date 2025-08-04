@@ -1,6 +1,5 @@
 import argparse
-from diffusers import DPMSolverMultistepScheduler
-from pipeline_stable_diffusion_dual import StableDiffusionDualPipeline
+from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
 
 import torch
 import os
@@ -12,11 +11,8 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--model_name", type=str, required=True)
     parser.add_argument("--lora_weights", type=str, required=True)
-    parser.add_argument("--mvtec_name", type=str, default="hazelnut")
-    parser.add_argument("--mvtec_aomaly_name", type=str, default="hole")
     parser.add_argument("--num_images", type=int, default=20)
-    parser.add_argument("--prompt_blend", type=str, default="a vfx with sks")
-    parser.add_argument("--prompt_fg", type=str, default="sks")
+    parser.add_argument("--prompt", type=str, default="a vfx")
     parser.add_argument("--num_inference_steps", type=int, default=25)
     parser.add_argument("--output_dir", type=str, required=True)
     parser.add_argument(
@@ -46,11 +42,6 @@ def parse_args():
         "--enable_model_cpu_offload",
         action="store_true",
         help="Enable model CPU offload (faster than sequential)",
-    )
-    parser.add_argument(
-        "--disable_safety_checker",
-        action="store_true",
-        help="Disable NSFW safety checker",
     )
     parser.add_argument(
         "--seed", type=int, default=None, help="Random seed for reproducible generation"
@@ -86,7 +77,7 @@ def main(args):
     # 選擇資料類型
     dtype = torch.float16 if args.use_fp16 else torch.float32
     
-    pipe = StableDiffusionDualPipeline.from_pretrained(
+    pipe = StableDiffusionPipeline.from_pretrained(
         args.model_name, torch_dtype=dtype
     )
 
@@ -106,11 +97,9 @@ def main(args):
     # 載入 LoRA 權重
     pipe.load_lora_weights(args.lora_weights)
     
-    # 禁用安全檢查器（如果需要）
-    if args.disable_safety_checker:
-        pipe.safety_checker = None
-        pipe.requires_safety_checker = False
-        logging.info("Disabled NSFW safety checker")
+    pipe.safety_checker = None
+    pipe.requires_safety_checker = False
+    logging.info("Disabled NSFW safety checker")
 
     # 啟用記憶體優化選項
     if args.enable_xformers:
@@ -145,8 +134,7 @@ def main(args):
     progress_bar.set_description("Generating images")
 
     pipeline_args = {
-        "prompt_blend": args.prompt_blend,
-        "prompt_fg": args.prompt_fg,
+        "prompt": args.prompt,
         "num_inference_steps": args.num_inference_steps,
     }
 
@@ -163,24 +151,10 @@ def main(args):
                 args.seed + i
             )  # Add i to get different images with predictable seeds
         
-        # 使用雙重管線生成圖片和遮罩
-        result_blend, result_fg = pipe(
-            prompt_blend=args.prompt_blend,
-            prompt_fg=args.prompt_fg,
-            num_inference_steps=args.num_inference_steps,
-            guidance_scale=2.5,
-            generator=generator,
-            height=512,
-            width=512,
-        )
-        
-        # 獲取生成的圖片
-        image_blend = result_blend.images[0]
-        image_fg = result_fg.images[0]
+        result = pipe(**pipeline_args, generator=generator).images[0]
         
         # 保存圖片
-        image_blend.save(os.path.join(img_path, f"{i}.png"))
-        image_fg.save(os.path.join(fg_path, f"{i}.png"))
+        result.save(os.path.join(img_path, f"{i}.png"))
         
         logging.info(f"Generated and saved image pair {i}")
         progress_bar.update(1)

@@ -5,18 +5,16 @@ export MODEL_NAME="models/stable-diffusion-v1-5"
 export LORA_WEIGHTS="all_generate/$MVTEC_NAME/$MVTEC_ANOMALY_NAME/checkpoint-1000"
 export OUTPUT_DIR="generate_data/$MVTEC_NAME/$MVTEC_ANOMALY_NAME"
 
-rm -rf $OUTPUT_DIR
+export INSTANCE_PROMPT_BLEND="a vfx with sks"
+export INSTANCE_PROMPT_FG="sks"
 
-python inference.py \
+python src/stage2/inference.py \
     --model_name=$MODEL_NAME \
     --lora_weights=$LORA_WEIGHTS \
-    --mvtec_name=$MVTEC_NAME \
-    --mvtec_aomaly_name=$MVTEC_ANOMALY_NAME \
     --num_images=5 \
-    --prompt_blend="a vfx with sks" \
-    --prompt_fg="sks" \
+    --prompt_blend=$INSTANCE_PROMPT_BLEND \
+    --prompt_fg=$INSTANCE_PROMPT_FG \
     --num_inference_steps=50 \
     --output_dir=$OUTPUT_DIR \
     --enable_xformers \
-    --enable_vae_slicing \
-    --disable_safety_checker
+    --enable_vae_slicing

@@ -558,7 +558,7 @@ class DreamBoothLoRATrainer:
             size=self.args.resolution,
             center_crop=self.args.center_crop,
             encoder_hidden_states=pre_computed_encoder_hidden_states,
-            class_prompt_encoder_hidden_states=pre_computed_class_prompt_encoder_hidden_states,
+            instance_prompt_encoder_hidden_states=pre_computed_class_prompt_encoder_hidden_states,
             tokenizer_max_length=self.args.tokenizer_max_length,
             mvtec_name=self.args.mvtec_name,
         )

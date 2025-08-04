@@ -4,7 +4,6 @@ export MODEL_NAME="models/stable-diffusion-v1-5"
 export INSTANCE_DIR="datasets/mvtec_ad"
 
 export NAME="hazelnut"
-export ANOMALY="hole"
 
 export INSTANCE_PROMPT="a vfx"
 
@@ -13,13 +12,12 @@ export OUTPUT_DIR="all_generate/"
 accelerate launch src/stage1/train.py \
     --mixed_precision="no" \
     --mvtec_name=$NAME \
-    --mvtec_anamaly_name=$ANOMALY \
     --pretrained_model_name_or_path=$MODEL_NAME \
     --instance_data_dir=$INSTANCE_DIR \
-    --output_dir="$OUTPUT_DIR/$NAME/$ANOMALY/stage1" \
+    --output_dir="$OUTPUT_DIR/$NAME/stage1" \
     --instance_prompt="$INSTANCE_PROMPT" \
     --resolution=512 \
-    --train_batch_size=4 \
+    --train_batch_size=8 \
     --gradient_accumulation_steps=1 \
     --learning_rate=2e-5 \
     --lr_scheduler="constant" \
@@ -29,5 +27,4 @@ accelerate launch src/stage1/train.py \
     --seed 32 \
     --train_text_encoder \
     --num_inference_steps=25 \
-    --use_8bit_adam \
     --report_to="tensorboard"

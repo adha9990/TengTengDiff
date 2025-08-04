@@ -68,7 +68,12 @@ def main(args):
     else:
         raise ValueError(f"Invalid model directory: {args.model_dir}")
 
-    img_name_list = glob.glob(args.input_dir + os.sep + '*')
+    # 只獲取圖片檔案，排除目錄
+    img_name_list = []
+    for ext in ['*.png', '*.jpg', '*.jpeg', '*.bmp']:
+        img_name_list.extend(glob.glob(os.path.join(args.input_dir, ext)))
+    img_name_list.sort()  # 確保順序一致
+    print(f"Found {len(img_name_list)} images")
     print(img_name_list)
 
     # --------- 2. dataloader ---------
