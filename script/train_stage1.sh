@@ -6,23 +6,18 @@ export INSTANCE_DIR="datasets/mvtec_ad"
 export NAME="hazelnut"
 export ANOMALY="hole"
 
-export INSTANCE_PROMPT_BLEND="a vfx with sks"
-export INSTANCE_PROMPT_FG="sks"
+export INSTANCE_PROMPT="a vfx"
 
-export OUTPUT_DIR="all_generate/$NAME/$ANOMALY"
+export OUTPUT_DIR="all_generate/"
 
-rm -rf $OUTPUT_DIR
-
-accelerate launch src/train.py \
+accelerate launch src/stage1/train.py \
     --mixed_precision="no" \
     --mvtec_name=$NAME \
     --mvtec_anamaly_name=$ANOMALY \
     --pretrained_model_name_or_path=$MODEL_NAME \
     --instance_data_dir=$INSTANCE_DIR \
-    --output_dir=$OUTPUT_DIR \
-    --instance_prompt_blend="$INSTANCE_PROMPT" \
-    --instance_prompt_blend="$INSTANCE_PROMPT_BLEND" \
-    --instance_prompt_fg="$INSTANCE_PROMPT_FG" \
+    --output_dir="$OUTPUT_DIR/$NAME/$ANOMALY/stage1" \
+    --instance_prompt="$INSTANCE_PROMPT" \
     --resolution=512 \
     --train_batch_size=4 \
     --gradient_accumulation_steps=1 \
