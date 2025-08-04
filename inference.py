@@ -162,10 +162,27 @@ def main(args):
             generator.manual_seed(
                 args.seed + i
             )  # Add i to get different images with predictable seeds
-
+        
+        # 使用雙重管線生成圖片和遮罩
+        result_blend, result_fg = pipe(
+            prompt_blend=args.prompt_blend,
+            prompt_fg=args.prompt_fg,
+            num_inference_steps=args.num_inference_steps,
+            guidance_scale=2.5,
+            generator=generator,
+            height=512,
+            width=512,
+        )
+        
+        # 獲取生成的圖片
+        image_blend = result_blend.images[0]
+        image_fg = result_fg.images[0]
+        
+        # 保存圖片
         image_blend.save(os.path.join(img_path, f"{i}.png"))
         image_fg.save(os.path.join(fg_path, f"{i}.png"))
-
+        
+        logging.info(f"Generated and saved image pair {i}")
         progress_bar.update(1)
 
 

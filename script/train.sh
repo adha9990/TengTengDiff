@@ -1,3 +1,5 @@
+#!/bin/bash
+
 export MODEL_NAME="models/stable-diffusion-v1-5"
 export INSTANCE_DIR="datasets/mvtec_ad"
 
@@ -11,13 +13,14 @@ export OUTPUT_DIR="all_generate/$NAME/$ANOMALY"
 
 rm -rf $OUTPUT_DIR
 
-accelerate launch train_dreambooth_lora.py \
+accelerate launch src/train.py \
     --mixed_precision="no" \
     --mvtec_name=$NAME \
     --mvtec_anamaly_name=$ANOMALY \
-    --pretrained_model_name_or_path=$MODEL_NAME  \
+    --pretrained_model_name_or_path=$MODEL_NAME \
     --instance_data_dir=$INSTANCE_DIR \
     --output_dir=$OUTPUT_DIR \
+    --instance_prompt_blend="$INSTANCE_PROMPT" \
     --instance_prompt_blend="$INSTANCE_PROMPT_BLEND" \
     --instance_prompt_fg="$INSTANCE_PROMPT_FG" \
     --resolution=512 \
