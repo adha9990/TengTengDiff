@@ -513,7 +513,7 @@ class DreamBoothLoRATrainer:
                 return prompt_embeds
 
             pre_computed_encoder_hidden_states = compute_text_embeddings(
-                self.args.instance_prompt
+                self.args.instance_prompt_blend
             )
             validation_prompt_negative_prompt_embeds = compute_text_embeddings("")
 
@@ -537,7 +537,6 @@ class DreamBoothLoRATrainer:
         # Dataset and DataLoaders creation:
         train_dataset = DreamBoothDataset(
             instance_data_root=self.args.instance_data_dir,
-            instance_prompt=self.args.instance_prompt,
             instance_prompt_blend=self.args.instance_prompt_blend,
             instance_prompt_fg=self.args.instance_prompt_fg,
             class_data_root=(
@@ -661,23 +660,32 @@ class DreamBoothLoRATrainer:
         # Potentially load in the weights and states from a previous save
         if self.args.resume_from_checkpoint:
             if self.args.resume_from_checkpoint != "latest":
-                path = os.path.basename(self.args.resume_from_checkpoint)
+                # Check if it's a full path or just a checkpoint name
+                if os.path.exists(self.args.resume_from_checkpoint):
+                    # It's a full path
+                    checkpoint_path = self.args.resume_from_checkpoint
+                    path = os.path.basename(checkpoint_path)
+                else:
+                    # It's just a checkpoint name in the output_dir
+                    path = os.path.basename(self.args.resume_from_checkpoint)
+                    checkpoint_path = os.path.join(self.args.output_dir, path)
             else:
                 # Get the most recent checkpoint
                 dirs = os.listdir(self.args.output_dir)
                 dirs = [d for d in dirs if d.startswith("checkpoint")]
                 dirs = sorted(dirs, key=lambda x: int(x.split("-")[1]))
                 path = dirs[-1] if len(dirs) > 0 else None
+                checkpoint_path = os.path.join(self.args.output_dir, path) if path else None
 
-            if path is None:
+            if checkpoint_path is None or not os.path.exists(checkpoint_path):
                 self.accelerator.print(
                     f"Checkpoint '{self.args.resume_from_checkpoint}' does not exist. Starting a new training run."
                 )
                 self.args.resume_from_checkpoint = None
                 initial_global_step = 0
             else:
-                self.accelerator.print(f"Resuming from checkpoint {path}")
-                self.accelerator.load_state(os.path.join(self.args.output_dir, path))
+                self.accelerator.print(f"Resuming from checkpoint {checkpoint_path}")
+                self.accelerator.load_state(checkpoint_path)
                 global_step = int(path.split("-")[1])
 
                 initial_global_step = global_step
@@ -989,7 +997,7 @@ class DreamBoothLoRATrainer:
                     images=images,
                     base_model=self.args.pretrained_model_name_or_path,
                     train_text_encoder=self.args.train_text_encoder,
-                    prompt=self.args.instance_prompt,
+                    prompt=self.args.instance_prompt_blend,
                     repo_folder=self.args.output_dir,
                     pipeline=pipeline,
                 )

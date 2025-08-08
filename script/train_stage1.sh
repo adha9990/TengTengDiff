@@ -14,7 +14,7 @@ accelerate launch src/stage1/train.py \
     --mvtec_name=$NAME \
     --pretrained_model_name_or_path=$MODEL_NAME \
     --instance_data_dir=$INSTANCE_DIR \
-    --output_dir="$OUTPUT_DIR/$NAME/stage1" \
+    --output_dir="$OUTPUT_DIR/$NAME/full" \
     --instance_prompt="$INSTANCE_PROMPT" \
     --resolution=512 \
     --train_batch_size=8 \
@@ -25,6 +25,9 @@ accelerate launch src/stage1/train.py \
     --max_train_steps=5000 \
     --rank 32 \
     --seed 32 \
+    --num_validation_images=4 \
+    --validation_prompt="$INSTANCE_PROMPT" \
     --train_text_encoder \
     --num_inference_steps=25 \
+    --enable_xformers_memory_efficient_attention \
     --report_to="tensorboard"

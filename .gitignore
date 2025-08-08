@@ -13,7 +13,6 @@ __pycache__
 /models/
 /results/
 /all_generate/
-/all_generate_2/
 /generate_data/
 
 *.out

@@ -47,13 +47,6 @@ def parse_args(input_args=None):
         help="A folder containing the training data of class images.",
     )
     parser.add_argument(
-        "--instance_prompt",
-        type=str,
-        default=None,
-        required=True,
-        help="The prompt with identifier specifying the instance",
-    )
-    parser.add_argument(
         "--instance_prompt_blend",
         type=str,
         default=None,

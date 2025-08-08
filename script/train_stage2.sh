@@ -26,10 +26,10 @@ accelerate launch src/stage2/train.py \
     --learning_rate=2e-5 \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \
-    --max_train_steps=5000 \
+    --max_train_steps=8000 \
+    --resume_from_checkpoint="$OUTPUT_DIR/$NAME/full/checkpoint-5000" \
     --rank 32 \
     --seed 32 \
     --train_text_encoder \
     --num_inference_steps=25 \
-    --use_8bit_adam \
     --report_to="tensorboard"
