@@ -11,3 +11,7 @@ torch-tb-profiler
 einops
 diffusers
 matplotlib
+
+# 評估指標套件
+lpips
+torch-fidelity
