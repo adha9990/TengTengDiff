@@ -17,7 +17,7 @@ accelerate launch src/stage2/train.py \
     --mvtec_anamaly_name=$ANOMALY \
     --pretrained_model_name_or_path=$MODEL_NAME \
     --instance_data_dir=$INSTANCE_DIR \
-    --output_dir="$OUTPUT_DIR/$NAME/$ANOMALY/stage2" \
+    --output_dir="$OUTPUT_DIR/$NAME/$ANOMALY" \
     --instance_prompt_blend="$INSTANCE_PROMPT_BLEND" \
     --instance_prompt_fg="$INSTANCE_PROMPT_FG" \
     --resolution=512 \
