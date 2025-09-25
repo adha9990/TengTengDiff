@@ -1,14 +1,16 @@
 export MODEL_NAME="/models/u2net.pth"
 
-export NAME="hazelnut"
-export ANOMALY="hole"
+# 從命令列參數讀取
+IMAGE_DIR="$1"
 
-export DIR="/generate_data"
-export OUTPUT_DIR="$DIR/$NAME/$ANOMALY/mask"
-
-rm -rf $OUTPUT_DIR
+# 顯示使用說明
+if [ $# -eq 0 ]; then
+    echo "Usage: $0 <name> <anomaly>"
+    echo "Example: $0 hazelnut hole"
+    echo "Using defaults: IMAGE_DIR=$IMAGE_DIR"
+fi
 
 python /U-2-Net/u2net_test.py \
     --model_dir=$MODEL_NAME \
-    --input_dir="$DIR/$NAME/$ANOMALY/fg" \
-    --output_dir="$DIR/$NAME/$ANOMALY/mask"
+    --input_dir="$IMAGE_DIR" \
+    --output_dir="$IMAGE_DIR/mask"
