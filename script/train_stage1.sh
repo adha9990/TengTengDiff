@@ -9,7 +9,7 @@ export INSTANCE_PROMPT="a vfx"
 
 export OUTPUT_DIR="all_generate/"
 
-accelerate launch src/stage1/train.py \
+accelerate launch train/stage1/train.py \
     --mixed_precision="no" \
     --mvtec_name=$NAME \
     --pretrained_model_name_or_path=$MODEL_NAME \

@@ -11,7 +11,7 @@ export INSTANCE_PROMPT_FG="sks"
 
 export OUTPUT_DIR="all_generate/"
 
-accelerate launch src/stage2/train.py \
+accelerate launch train/stage2/train.py \
     --mixed_precision="no" \
     --mvtec_name=$NAME \
     --mvtec_anamaly_name=$ANOMALY \

@@ -1,4 +1,4 @@
-export MODEL_NAME="/models/u2net.pth"
+export MODEL_NAME="models/u2net.pth"
 
 # 從命令列參數讀取
 IMAGE_DIR="$1"
@@ -10,7 +10,7 @@ if [ $# -eq 0 ]; then
     echo "Using defaults: IMAGE_DIR=$IMAGE_DIR"
 fi
 
-python /U-2-Net/u2net_test.py \
+python extra_repository/U-2-Net/u2net_test.py \
     --model_dir=$MODEL_NAME \
     --input_dir="$IMAGE_DIR" \
     --output_dir="$IMAGE_DIR/mask"

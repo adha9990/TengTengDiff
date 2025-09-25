@@ -8,7 +8,7 @@ export OUTPUT_DIR="generate_data/$MVTEC_NAME/$MVTEC_ANOMALY_NAME"
 export INSTANCE_PROMPT_BLEND="a vfx with sks"
 export INSTANCE_PROMPT_FG="sks"
 
-python src/stage2/inference.py \
+python inference/stage2/inference.py \
     --model_name=$MODEL_NAME \
     --lora_weights=$LORA_WEIGHTS \
     --num_images=100 \

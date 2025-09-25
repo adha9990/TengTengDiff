@@ -7,7 +7,7 @@ export OUTPUT_DIR="generate_data/$MVTEC_NAME/full"
 
 export INSTANCE_PROMPT="a vfx"
 
-python src/stage1/inference.py \
+python inference/stage1/inference.py \
     --model_name=$MODEL_NAME \
     --lora_weights=$LORA_WEIGHTS \
     --num_images=100 \

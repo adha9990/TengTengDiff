@@ -18,6 +18,6 @@ fi
 echo "處理目錄: $IMAGE_DIR"
 
 # 調用 merge_images.py
-.env/bin/python src/merge_images.py "$IMAGE_DIR"
+.env/bin/python merge_images.py "$IMAGE_DIR"
 
 echo "完成！"
