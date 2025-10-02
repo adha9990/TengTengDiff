@@ -46,7 +46,7 @@ def load_images(image_dir: str, device: torch.device, size: int = 256) -> Tuple[
     transform = transforms.Compose([
         transforms.Resize((size, size)),
         transforms.ToTensor(),
-        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
     dataset = ImageDataset(image_dir, transform=transform)
@@ -121,17 +121,20 @@ def compute_ic_lpips(image_dir: str, device: torch.device,
         cluster_results = []
         all_distances = []
 
+        # 隨機打亂圖片索引以進行隨機分群
+        indices = np.arange(n_images)
+        np.random.shuffle(indices)
+
         for cluster_id in range(n_clusters):
-            # 隨機採樣該 cluster 的圖片
-            if cluster_id * images_per_cluster + images_per_cluster <= n_images:
-                # 順序分配（也可以使用隨機採樣）
-                start_idx = cluster_id * images_per_cluster
-                end_idx = start_idx + images_per_cluster
-                cluster_images = images[start_idx:end_idx]
-            else:
-                # 最後一個 cluster 可能包含剩餘的所有圖片
-                indices = np.random.choice(n_images, min(images_per_cluster, n_images), replace=False)
-                cluster_images = images[indices]
+            # 隨機分配圖片到 cluster
+            start_idx = cluster_id * images_per_cluster
+            end_idx = min(start_idx + images_per_cluster, n_images)
+
+            if start_idx >= n_images:
+                break
+
+            cluster_indices = indices[start_idx:end_idx]
+            cluster_images = images[cluster_indices]
 
             if len(cluster_images) < 2:
                 continue
