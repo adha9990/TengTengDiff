@@ -17,7 +17,7 @@ accelerate launch train/stage2/train.py \
     --mvtec_anamaly_name=$ANOMALY \
     --pretrained_model_name_or_path=$MODEL_NAME \
     --instance_data_dir=$INSTANCE_DIR \
-    --output_dir="$OUTPUT_DIR/$NAME/$ANOMALY" \
+    --output_dir="$OUTPUT_DIR/$NAME/stage2-$ANOMALY" \
     --instance_prompt_blend="$INSTANCE_PROMPT_BLEND" \
     --instance_prompt_fg="$INSTANCE_PROMPT_FG" \
     --resolution=512 \
@@ -27,7 +27,7 @@ accelerate launch train/stage2/train.py \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \
     --max_train_steps=8000 \
-    --resume_from_checkpoint="$OUTPUT_DIR/$NAME/full/checkpoint-5000" \
+    --resume_from_checkpoint="$OUTPUT_DIR/$NAME/stage2-$ANOMALY/checkpoint-5000" \
     --rank 32 \
     --seed 32 \
     --train_text_encoder \
