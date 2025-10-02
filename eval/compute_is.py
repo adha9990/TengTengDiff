@@ -43,7 +43,6 @@ class ImageDataset(Dataset):
 
 def get_inception_model(device: torch.device) -> nn.Module:
     model = models.inception_v3(pretrained=True, transform_input=False)
-    model.fc = nn.Identity()
     model = model.to(device)
     model.eval()
     return model
