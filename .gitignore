@@ -1,21 +1,15 @@
 .env
 .vscode
-.idea
 .DS_Store
-.venv
 .pytest_cache
 __pycache__
 
-/finetune/
 /datasets/
-/wandb/
 /output/
 /models/
 /results/
 /all_generate/
 /generate_data/
-/eval_results/
+/attention_maps/
 
 *.out
-
-/result
