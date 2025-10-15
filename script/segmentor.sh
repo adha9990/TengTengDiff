@@ -2,11 +2,13 @@ export MODEL_NAME="models/u2net.pth"
 
 # 從命令列參數讀取
 IMAGE_DIR="$1"
+OUTPUT_DIR="$2"
 
 # 顯示使用說明
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <folder_path>"
+    echo "Usage: $0 <input_folder> [output_folder]"
     echo "Example: $0 generate_data/hazelnut/hole"
+    echo "Example: $0 datasets/mvtec_ad/hazelnut/test/hole processed_datasets/temp/hazelnut/hole"
     exit 1
 fi
 
@@ -16,10 +18,12 @@ if [ ! -d "$IMAGE_DIR" ]; then
     exit 1
 fi
 
-# 取得資料夾名稱和上層目錄
-FOLDER_NAME=$(basename "$IMAGE_DIR")
-PARENT_DIR=$(dirname "$IMAGE_DIR")
-OUTPUT_DIR="$PARENT_DIR/${FOLDER_NAME}_segmented"
+# 如果沒有指定輸出目錄，使用預設命名（在同一父目錄下）
+if [ -z "$OUTPUT_DIR" ]; then
+    FOLDER_NAME=$(basename "$IMAGE_DIR")
+    PARENT_DIR=$(dirname "$IMAGE_DIR")
+    OUTPUT_DIR="$PARENT_DIR/${FOLDER_NAME}_segmented"
+fi
 
 # 建立輸出資料夾
 mkdir -p "$OUTPUT_DIR"
