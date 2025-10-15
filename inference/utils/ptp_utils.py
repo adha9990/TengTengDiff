@@ -183,7 +183,6 @@ class AttentionStore(AttentionControl):
                         for i in range(len(self.global_store[key])):
                             self.global_store[key][i] += self.step_store[key][i].detach()
         self.step_store = self.get_empty_store()
-        self.step_store = self.get_empty_store()
 
     def get_average_attention(self):
         average_attention = self.attention_store

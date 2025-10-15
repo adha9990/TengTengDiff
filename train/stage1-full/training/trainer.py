@@ -48,11 +48,11 @@ from diffusers.utils import (
 from diffusers.utils.import_utils import is_xformers_available
 from diffusers.utils.torch_utils import is_compiled_module
 
-from ..data import DreamBoothDataset, PromptDataset, collate_fn
-from ..models.utils import import_model_class_from_model_name_or_path, encode_prompt
-from ..utils.tokenization import tokenize_prompt
-from ..utils.model_card import save_model_card
-from .validation import log_validation
+from data import DreamBoothDataset, PromptDataset, collate_fn
+from models.utils import import_model_class_from_model_name_or_path, encode_prompt
+from utils.tokenization import tokenize_prompt
+from utils.model_card import save_model_card
+from training.validation import log_validation
 
 if is_wandb_available():
     import wandb

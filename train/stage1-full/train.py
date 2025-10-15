@@ -17,8 +17,8 @@ import sys
 import os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-from src.stage1.config.args import parse_args
-from src.stage1.training import DreamBoothLoRATrainer
+from config.args import parse_args
+from training import DreamBoothLoRATrainer
 
 
 def main():

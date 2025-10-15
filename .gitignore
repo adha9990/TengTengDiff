@@ -10,6 +10,8 @@ __pycache__
 /results/
 /all_generate/
 /generate_data/
+/generate_data2/
+/generate_data3/
 /attention_maps/
 
 *.out

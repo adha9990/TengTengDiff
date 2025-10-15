@@ -5,7 +5,7 @@ from torch.utils.data import Dataset
 from PIL import Image
 from PIL.ImageOps import exif_transpose
 from torchvision import transforms
-from ..utils.tokenization import tokenize_prompt
+from utils.tokenization import tokenize_prompt
 
 
 class DreamBoothDataset(Dataset):
