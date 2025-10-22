@@ -25,9 +25,6 @@ accelerate launch train/stage1-full/train.py \
     --max_train_steps=5000 \
     --rank 32 \
     --seed 32 \
-    --num_validation_images=4 \
-    --validation_prompt="$INSTANCE_PROMPT" \
     --train_text_encoder \
     --num_inference_steps=25 \
-    --enable_xformers_memory_efficient_attention \
     --report_to="tensorboard"

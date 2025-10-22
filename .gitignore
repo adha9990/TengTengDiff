@@ -5,6 +5,7 @@
 __pycache__
 
 /datasets/
+/processed_datasets/
 /output/
 /models/
 /results/
@@ -15,3 +16,4 @@ __pycache__
 /attention_maps/
 
 *.out
+all_generate3/

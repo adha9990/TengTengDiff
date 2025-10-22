@@ -11,11 +11,11 @@ NAME="hazelnut"
 # 異常類型（可選，如果是 Stage 1 則留空）
 ANOMALY="hole"  # 例如: "crack", "hole", "scratch" 或留空為 Stage 1
 
-# 檢查點步數
+# 檢查點步
 CHECKPOINT_STEP="5000"  # Stage 1 通常是 5000，Stage 2 通常是 8000
 
 # 提示詞
-PROMPT="a vfx with sks"  # Stage 1: "a vfx", Stage 2: "a vfx with sks"
+PROMPT="a vfx"  # Stage 1: "a vfx", Stage 2: "a vfx with sks"
 
 # Attention 解析度（16 或 32，越大越精細但越慢）
 ATTENTION_RES=16
@@ -34,8 +34,8 @@ GUIDANCE_SCALE=7.5
 # 基礎模型路徑
 MODEL_NAME="models/stable-diffusion-v1-5"
 
-LORA_WEIGHTS="all_generate/${NAME}/stage1-${ANOMALY}-dual/checkpoint-${CHECKPOINT_STEP}"
-OUTPUT_DIR="attention_maps/${NAME}/stage1-${ANOMALY}-dual/checkpoint-${CHECKPOINT_STEP}"
+LORA_WEIGHTS="all_generate/${NAME}/stage1-full/checkpoint-${CHECKPOINT_STEP}"
+OUTPUT_DIR="attention_maps/${NAME}/stage1-full/checkpoint-${CHECKPOINT_STEP}"
 
 # ==================== 檢查和執行 ====================
 
