@@ -1,5 +1,5 @@
 import argparse
-from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
+from diffusers import UniPCMultistepScheduler, StableDiffusionPipeline
 
 import torch
 import os
@@ -90,7 +90,7 @@ def main(args):
 
         scheduler_args["variance_type"] = variance_type
 
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(
+    pipe.scheduler = UniPCMultistepScheduler.from_config(
         pipe.scheduler.config, **scheduler_args
     )
 

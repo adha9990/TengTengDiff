@@ -1,19 +1,33 @@
 export MVTEC_NAME="hazelnut"
-export MVTEC_ANOMALY_NAME="hole"
 
 export MODEL_NAME="models/stable-diffusion-v1-5"
-export LORA_WEIGHTS="all_generate/$MVTEC_NAME/stage2-$MVTEC_ANOMALY_NAME-dual/checkpoint-8000"
-export OUTPUT_DIR="generate_data/$MVTEC_NAME/stage2-$MVTEC_ANOMALY_NAME-dual"
 
 export INSTANCE_PROMPT_BLEND="a vfx with sks"
 export INSTANCE_PROMPT_FG="sks"
 
-python inference/inference.py \
-    --model_name=$MODEL_NAME \
-    --lora_weights=$LORA_WEIGHTS \
-    --num_images=100 \
-    --prompt="$INSTANCE_PROMPT_BLEND" \
-    --num_inference_steps=50 \
-    --output_dir=$OUTPUT_DIR \
-    --enable_xformers \
-    --enable_vae_slicing
+export ANOMALIES=("crack" "cut")
+export CHECKPOINT_STEPS=(1000 2000 3000 4000 5000)
+
+for ANOMALIE in "${ANOMALIES[@]}"; do
+    for CHECKPOINT_STEP in "${CHECKPOINT_STEPS[@]}"; do
+        echo "=================================================="
+        echo "開始 Stage 2 推理：生成異常圖片"
+        echo "類別: $MVTEC_NAME"
+        echo "異常: $ANOMALIE"
+        echo "檢查點: checkpoint-$CHECKPOINT_STEP"
+        echo "=================================================="
+
+        export LORA_WEIGHTS="all_generate_dino.5/$MVTEC_NAME/stage1-$ANOMALIE-dual/checkpoint-$CHECKPOINT_STEP"
+        export OUTPUT_DIR="generate_data_dino.5/$MVTEC_NAME/stage1-$ANOMALIE-dual/checkpoint-$CHECKPOINT_STEP"
+
+        CUDA_VISIBLE_DEVICES=0 python inference/inference.py \
+            --model_name=$MODEL_NAME \
+            --lora_weights=$LORA_WEIGHTS \
+            --num_images=100 \
+            --prompt="$INSTANCE_PROMPT_BLEND" \
+            --num_inference_steps=100 \
+            --output_dir=$OUTPUT_DIR \
+            --enable_xformers \
+            --enable_vae_slicing
+    done
+done

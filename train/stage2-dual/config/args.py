@@ -105,6 +105,41 @@ def parse_args(input_args=None):
         default=25,
         help="The number of inference steps.",
     )
+
+    # DINOv2 Perceptual Loss arguments
+    parser.add_argument(
+        "--use_dinov2_loss",
+        action="store_true",
+        help="Whether to use DINOv2 perceptual loss during training.",
+    )
+    parser.add_argument(
+        "--dinov2_loss_weight",
+        type=float,
+        default=0.1,
+        help="Weight for DINOv2 perceptual loss. Higher values give more weight to perceptual similarity.",
+    )
+    parser.add_argument(
+        "--dinov2_model_name",
+        type=str,
+        default="vitb14",
+        choices=["vits14", "vitb14", "vitl14", "vitg14"],
+        help="DINOv2 model variant to use for perceptual loss. Larger models capture richer features but use more memory.",
+    )
+    parser.add_argument(
+        "--dinov2_loss_type",
+        type=str,
+        default="l2",
+        choices=["l1", "l2", "smooth_l1"],
+        help="Type of loss to use for feature comparison (l1, l2, or smooth_l1).",
+    )
+    parser.add_argument(
+        "--dinov2_feature_layers",
+        type=int,
+        nargs="+",
+        default=[3, 6, 9, 11],
+        help="Transformer block indices to extract features from for perceptual loss.",
+    )
+
     parser.add_argument(
         "--with_prior_preservation",
         default=False,

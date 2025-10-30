@@ -17,14 +17,19 @@ accelerate launch train/stage1-full/train.py \
     --output_dir="$OUTPUT_DIR/$NAME/stage1-full" \
     --instance_prompt="$INSTANCE_PROMPT" \
     --resolution=512 \
-    --train_batch_size=8 \
-    --gradient_accumulation_steps=1 \
+    --train_batch_size=2 \
+    --gradient_accumulation_steps=8 \
+    --gradient_checkpointing \
     --learning_rate=2e-5 \
     --lr_scheduler="constant" \
     --lr_warmup_steps=0 \
     --max_train_steps=5000 \
     --rank 32 \
     --seed 32 \
-    --train_text_encoder \
     --num_inference_steps=25 \
-    --report_to="tensorboard"
+    --report_to="tensorboard" \
+    --use_dinov2_loss \
+    --dinov2_loss_weight=0.1 \
+    --dinov2_model_name="vitb14" \
+    --dinov2_loss_type="l2" \
+    --dinov2_feature_layers 3 6 9 11

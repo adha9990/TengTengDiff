@@ -9,11 +9,17 @@ __pycache__
 /output/
 /models/
 /results/
+*.out
+
 /all_generate/
+/all_generate_dino.5/
+/all_generate_dino.1/
+/all_generate3/
 /generate_data/
-/generate_data2/
+/generate_data_dino.5/
+/generate_data_dino.1/
 /generate_data3/
 /attention_maps/
 
-*.out
-all_generate3/
+# External repositories
+/extra_repository/

@@ -1,45 +1,36 @@
 #!/bin/bash
 
-# bash script/eval/eval_ic_lpips.sh generate_data/hazelnut/full/image
-
 # IC-LPIPS (Intra-cluster pairwise LPIPS) Evaluation Script
+# 使用 DualAnoDiff 的評估方法 - 更準確的 IC-LPIPS 計算
+# bash script/eval/eval_ic_lpips.sh hazelnut
 
-IMAGE_DIR="${1:-generate_data/hazelnut/full/image}"
-LPIPS_NET="${2:-alex}"
-MAX_IMAGES="${3:-}"
-BATCH_SIZE="${4:-32}"
+SAMPLE_NAME="${1:-hazelnut}"
+GENERATE_DATA_PATH="${2:-generate_data}"
+MVTEC_PATH="${3:-datasets/mvtec_ad}"
+OUTPUT="${4:-ic_lpips_results.csv}"
 
 echo "=================================================="
-echo "IC-LPIPS Evaluation"
+echo "IC-LPIPS Evaluation (DualAnoDiff Method)"
 echo "=================================================="
-echo "Image Directory: $IMAGE_DIR"
-echo "LPIPS Network: $LPIPS_NET"
-if [ -n "$MAX_IMAGES" ]; then
-    echo "Max Images: $MAX_IMAGES"
-else
-    echo "Max Images: All"
-fi
-echo "Batch Size: $BATCH_SIZE"
+echo "Sample Name: $SAMPLE_NAME"
+echo "Generate Data Path: $GENERATE_DATA_PATH"
+echo "MVTec Path: $MVTEC_PATH"
+echo "Output File: $OUTPUT"
 echo "=================================================="
 
-if [ ! -d "$IMAGE_DIR" ]; then
-    echo "Error: Image directory does not exist: $IMAGE_DIR"
-    echo "Usage: bash $0 [image_dir] [lpips_net] [max_images] [batch_size]"
-    echo "Example: bash $0 generate_data/hazelnut/full/image alex 100 32"
-    echo "LPIPS networks: alex, vgg, squeeze"
+if [ ! -d "$GENERATE_DATA_PATH/$SAMPLE_NAME" ]; then
+    echo "Error: Sample directory does not exist: $GENERATE_DATA_PATH/$SAMPLE_NAME"
+    echo "Usage: bash $0 [sample_name] [generate_data_path] [mvtec_path] [output]"
+    echo "Example: bash $0 hazelnut generate_data datasets/mvtec_ad ic_lpips_results.csv"
+    echo "Sample names: hazelnut, capsule, bottle, etc. (or 'all' for all samples)"
     exit 1
 fi
 
-MAX_IMAGES_ARG=""
-if [ -n "$MAX_IMAGES" ]; then
-    MAX_IMAGES_ARG="--max_images $MAX_IMAGES"
-fi
-
-.env/bin/python eval/compute_ic_lpips.py \
-    --image_dir "$IMAGE_DIR" \
-    --lpips_net "$LPIPS_NET" \
-    --batch_size "$BATCH_SIZE" \
-    $MAX_IMAGES_ARG
+.env/bin/python eval/compute-ic-lpips.py \
+    --sample_name "$SAMPLE_NAME" \
+    --generate_data_path "$GENERATE_DATA_PATH" \
+    --mvtec_path "$MVTEC_PATH" \
+    --output "$OUTPUT"
 
 echo ""
-echo "Evaluation completed!"
+echo "Evaluation completed! Results saved to $OUTPUT"

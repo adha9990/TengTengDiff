@@ -54,6 +54,7 @@ from models.utils import import_model_class_from_model_name_or_path, encode_prom
 from utils.tokenization import tokenize_prompt
 from utils.model_card import save_model_card
 from training.validation import log_validation
+from losses import DINOv2PerceptualLoss
 
 if is_wandb_available():
     import wandb
@@ -445,6 +446,23 @@ class DreamBoothLoRATrainer:
         # Setup hooks
         self.setup_hooks(unet, text_encoder)
 
+        # Initialize DINOv2 perceptual loss if requested
+        dinov2_loss_fn = None
+        if self.args.use_dinov2_loss:
+            logger.info(f"Initializing DINOv2 perceptual loss (model={self.args.dinov2_model_name}, weight={self.args.dinov2_loss_weight})")
+            dinov2_loss_fn = DINOv2PerceptualLoss(
+                model_name=self.args.dinov2_model_name,
+                feature_layers=self.args.dinov2_feature_layers,
+                loss_type=self.args.dinov2_loss_type,
+                normalize_features=True,
+                resize_input=True,
+                device=self.accelerator.device
+            )
+            # Move to device and set to eval mode
+            dinov2_loss_fn.to(self.accelerator.device)
+            dinov2_loss_fn.eval()
+            logger.info("DINOv2 perceptual loss initialized successfully")
+
         # Enable TF32 for faster training on Ampere GPUs
         if self.args.allow_tf32:
             torch.backends.cuda.matmul.allow_tf32 = True
@@ -637,6 +655,9 @@ class DreamBoothLoRATrainer:
         if self.accelerator.is_main_process:
             tracker_config = vars(copy.deepcopy(self.args))
             tracker_config.pop("validation_images")
+            # Convert list to string for TensorBoard compatibility
+            if "dinov2_feature_layers" in tracker_config and isinstance(tracker_config["dinov2_feature_layers"], list):
+                tracker_config["dinov2_feature_layers"] = str(tracker_config["dinov2_feature_layers"])
             self.accelerator.init_trackers("dreambooth-lora", config=tracker_config)
 
         # Train!
@@ -857,6 +878,83 @@ class DreamBoothLoRATrainer:
                         loss = F.mse_loss(
                             model_pred.float(), target.float(), reduction="mean"
                         )
+
+                    # Add DINOv2 perceptual loss if enabled
+                    if dinov2_loss_fn is not None and vae is not None:
+                        # Stage 2 dual training: Batch contains blend and fg images interleaved
+                        # After einops.rearrange (line 783): [blend_0, fg_0, blend_1, fg_1, ...]
+                        # DINOv2 loss is computed only on blend images (full anomaly images)
+
+                        # Handle prior preservation: extract only instance part if needed
+                        if self.args.with_prior_preservation:
+                            # After chunking in line 860, model_pred already contains only instance part
+                            # We also need to extract instance part from noisy_model_input and model_input
+                            noisy_latents_for_dinov2 = torch.chunk(noisy_model_input, 2, dim=0)[0]
+                            target_latents_for_dinov2 = torch.chunk(model_input, 2, dim=0)[0]
+                        else:
+                            noisy_latents_for_dinov2 = noisy_model_input
+                            target_latents_for_dinov2 = model_input
+
+                        # Extract blend from interleaved [blend, fg, blend, fg, ...]
+                        # Even indices (0, 2, 4, ...) are blend, odd indices are fg
+                        blend_indices = torch.arange(
+                            0, model_pred.shape[0], 2, device=model_pred.device
+                        )
+
+                        model_pred_blend = model_pred[blend_indices]
+                        noisy_latents_blend = noisy_latents_for_dinov2[blend_indices]
+                        target_latents_blend = model_input_blend  # Use pre-separated blend latents
+
+                        # Get noise schedule alphas
+                        alphas_cumprod = noise_scheduler.alphas_cumprod.to(
+                            device=target_latents_blend.device,
+                            dtype=target_latents_blend.dtype
+                        )
+                        alpha_t = alphas_cumprod[timesteps].reshape(-1, 1, 1, 1)
+
+                        # Reconstruct clean latents from noisy latents and predicted noise
+                        # Following the DDPM formulation: x0 = (xt - sqrt(1-alpha_t) * noise) / sqrt(alpha_t)
+                        if noise_scheduler.config.prediction_type == "epsilon":
+                            # model_pred is noise prediction
+                            sqrt_alpha_t = torch.sqrt(alpha_t)
+                            sqrt_one_minus_alpha_t = torch.sqrt(1 - alpha_t)
+
+                            # Predicted clean latents
+                            pred_original_sample = (
+                                noisy_latents_blend - sqrt_one_minus_alpha_t * model_pred_blend
+                            ) / sqrt_alpha_t
+                            # Target clean latents (ground truth)
+                            target_original_sample = target_latents_blend
+
+                        elif noise_scheduler.config.prediction_type == "v_prediction":
+                            # For v-prediction
+                            pred_original_sample = (
+                                torch.sqrt(alpha_t) * noisy_latents_blend
+                            ) - (torch.sqrt(1 - alpha_t) * model_pred_blend)
+                            target_original_sample = target_latents_blend
+                        else:
+                            raise ValueError(
+                                f"Unknown prediction type {noise_scheduler.config.prediction_type}"
+                            )
+
+                        # Decode to pixel space
+                        pred_original_sample = pred_original_sample / vae.config.scaling_factor
+                        target_original_sample = target_original_sample / vae.config.scaling_factor
+
+                        # Clamp for numerical stability
+                        pred_original_sample = torch.clamp(pred_original_sample, -10, 10)
+                        target_original_sample = torch.clamp(target_original_sample, -10, 10)
+
+                        # Decode latents to images
+                        pred_pixels = vae.decode(pred_original_sample.to(weight_dtype)).sample
+                        with torch.no_grad():
+                            target_pixels = vae.decode(target_original_sample.to(weight_dtype)).sample
+
+                        # Compute perceptual loss
+                        perceptual_loss = dinov2_loss_fn(pred_pixels, target_pixels)
+
+                        # Add weighted perceptual loss to total loss
+                        loss = loss + self.args.dinov2_loss_weight * perceptual_loss
 
                     self.accelerator.backward(loss)
                     if self.accelerator.sync_gradients:
