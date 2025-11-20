@@ -8,11 +8,37 @@ export NAME="hazelnut"
 export INSTANCE_PROMPT_BLEND="a vfx with sks"
 export INSTANCE_PROMPT_FG="sks"
 
-export OUTPUT_DIR="all_generate_dino.5/"
+export OUTPUT_DIR="all_generate/"
 
 ANOMALIES=("crack" "cut" "print" "hole")
 
 for ANOMALY in "${ANOMALIES[@]}"; do
+    # accelerate launch train/stage2-dual/train.py \
+    #     --mixed_precision="no" \
+    #     --mvtec_name=$NAME \
+    #     --mvtec_anamaly_name=$ANOMALY \
+    #     --pretrained_model_name_or_path=$MODEL_NAME \
+    #     --instance_data_dir=$INSTANCE_DIR \
+    #     --output_dir="$OUTPUT_DIR/$NAME/stage1-$ANOMALY-dual" \
+    #     --instance_prompt_blend="$INSTANCE_PROMPT_BLEND" \
+    #     --instance_prompt_fg="$INSTANCE_PROMPT_FG" \
+    #     --resolution=512 \
+    #     --train_batch_size=1 \
+    #     --gradient_accumulation_steps=64 \
+    #     --gradient_checkpointing \
+    #     --learning_rate=2e-5 \
+    #     --lr_scheduler="constant" \
+    #     --lr_warmup_steps=0 \
+    #     --max_train_steps=2500 \
+    #     --rank 32 \
+    #     --seed 32 \
+    #     --report_to="tensorboard" \
+    #     --use_dinov2_loss \
+    #     --dinov2_loss_weight=1 \
+    #     --dinov2_model_name="vitb14" \
+    #     --dinov2_loss_type="l2" \
+    #     --dinov2_feature_layers 3 6 9 11
+    
     accelerate launch train/stage2-dual/train.py \
         --mixed_precision="no" \
         --mvtec_name=$NAME \
@@ -23,8 +49,8 @@ for ANOMALY in "${ANOMALIES[@]}"; do
         --instance_prompt_blend="$INSTANCE_PROMPT_BLEND" \
         --instance_prompt_fg="$INSTANCE_PROMPT_FG" \
         --resolution=512 \
-        --train_batch_size=1 \
-        --gradient_accumulation_steps=64 \
+        --train_batch_size=8 \
+        --gradient_accumulation_steps=32 \
         --gradient_checkpointing \
         --learning_rate=2e-5 \
         --lr_scheduler="constant" \
@@ -32,11 +58,5 @@ for ANOMALY in "${ANOMALIES[@]}"; do
         --max_train_steps=5000 \
         --rank 32 \
         --seed 32 \
-        --num_inference_steps=25 \
-        --report_to="tensorboard" \
-        --use_dinov2_loss \
-        --dinov2_loss_weight=0.05 \
-        --dinov2_model_name="vitb14" \
-        --dinov2_loss_type="l2" \
-        --dinov2_feature_layers 3 6 9 11
+        --report_to="tensorboard"
 done

@@ -11,15 +11,10 @@ __pycache__
 /results/
 *.out
 
-/all_generate/
-/all_generate_dino.5/
-/all_generate_dino.1/
-/all_generate3/
-/generate_data/
-/generate_data_dino.5/
-/generate_data_dino.1/
-/generate_data3/
+/all_generate*/
+
+/generate_data*/
+
 /attention_maps/
 
-# External repositories
 /extra_repository/

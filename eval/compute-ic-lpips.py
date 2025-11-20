@@ -130,27 +130,36 @@ if __name__ == '__main__':
         print(f"評估: {args.sample_name} - {args.anomaly_name}")
 
         # 檢查 MVTec 異常類型目錄
-        # anomaly_name 可能是 "stage2-hole-dual/checkpoint-5000"
-        # 我們需要從中提取實際的異常類型（如 "hole"）
-        anomaly_type = None
-        if 'hole' in args.anomaly_name.lower():
-            anomaly_type = 'hole'
-        elif 'crack' in args.anomaly_name.lower():
-            anomaly_type = 'crack'
-        elif 'scratch' in args.anomaly_name.lower():
-            anomaly_type = 'scratch'
-        else:
-            # 嘗試從 MVTec 目錄中找到匹配的異常類型
-            mvtec_test_dir = os.path.join(args.mvtec_path, args.sample_name, 'test')
-            if os.path.exists(mvtec_test_dir):
-                anomaly_dirs = [d for d in os.listdir(mvtec_test_dir) if d != 'good']
-                if anomaly_dirs:
-                    # 使用第一個找到的異常類型
-                    anomaly_type = anomaly_dirs[0]
-                    print(f"警告: 無法從 '{args.anomaly_name}' 推斷異常類型，使用第一個可用的: {anomaly_type}")
+        # anomaly_name 可能是 "stage1-print-dual/checkpoint-1000" 或 "stage2-hole-dual/checkpoint-5000"
+        # 我們需要從中提取實際的異常類型（如 "print", "hole"）
 
+        # 先從 MVTec 目錄中獲取所有可用的異常類型
+        mvtec_test_dir = os.path.join(args.mvtec_path, args.sample_name, 'test')
+        if not os.path.exists(mvtec_test_dir):
+            print(f"錯誤: MVTec 測試目錄不存在: {mvtec_test_dir}")
+            sys.exit(1)
+
+        # 獲取所有異常類型（排除 'good'）
+        available_anomalies = [d for d in os.listdir(mvtec_test_dir)
+                              if os.path.isdir(os.path.join(mvtec_test_dir, d)) and d != 'good']
+
+        if not available_anomalies:
+            print(f"錯誤: 在 {mvtec_test_dir} 中找不到任何異常類型")
+            sys.exit(1)
+
+        # 在 anomaly_name 中搜尋匹配的異常類型
+        anomaly_type = None
+        for anomaly in available_anomalies:
+            if anomaly.lower() in args.anomaly_name.lower():
+                anomaly_type = anomaly
+                print(f"從路徑 '{args.anomaly_name}' 推斷出異常類型: {anomaly_type}")
+                break
+
+        # 如果沒有找到匹配的異常類型，報錯而非默默使用第一個
         if not anomaly_type:
-            print(f"錯誤: 無法確定異常類型，請檢查 MVTec 數據集: {mvtec_test_dir}")
+            print(f"錯誤: 無法從路徑 '{args.anomaly_name}' 推斷異常類型")
+            print(f"可用的異常類型: {', '.join(available_anomalies)}")
+            print(f"請確保路徑中包含其中一個異常類型名稱")
             sys.exit(1)
 
         # 檢查 MVTec 測試目錄

@@ -4,7 +4,7 @@
 # 處理 generate_data/hazelnut 下所有類別的所有 checkpoint
 
 BASE_DIR="/home/bluestar/research/TengTengDiff"
-GENERATE_DIR="${BASE_DIR}/generate_data_dino.5/hazelnut"
+GENERATE_DIR="${BASE_DIR}/generate_data.2.5k_dino-5k_sme/hazelnut"
 
 # 異常類別列表
 ANOMALIES=("crack" "print" "hole" "cut")

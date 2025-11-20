@@ -46,6 +46,9 @@ def parse_args():
     parser.add_argument(
         "--seed", type=int, default=None, help="Random seed for reproducible generation"
     )
+    parser.add_argument(
+        "--guidance_scale", type=float, default=7.5, help="Guidance scale"
+    )
     return parser.parse_args()
 
 
@@ -136,6 +139,7 @@ def main(args):
     pipeline_args = {
         "prompt": args.prompt,
         "num_inference_steps": args.num_inference_steps,
+        "guidance_scale": args.guidance_scale,
     }
 
     # Create generator for seed if specified

@@ -1,10 +1,10 @@
 #!/bin/bash
 
 # 批量執行評估腳本
-# 評估 generate_data_dino.1/hazelnut 下所有異常類型的所有 checkpoint
+# 評估 generate_data_dino.2k_sme-5kdino/hazelnut 下所有異常類型的所有 checkpoint
 
 BASE_DIR="/home/bluestar/research/TengTengDiff"
-GENERATE_DIR="${BASE_DIR}/generate_data_dino.5/hazelnut"
+GENERATE_DIR="${BASE_DIR}/generate_data.2.5k_dino-5k_sme/hazelnut"
 MVTEC_PATH="${BASE_DIR}/datasets/mvtec_ad"
 GPU="${1:-0}"
 
