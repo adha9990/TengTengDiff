@@ -27,7 +27,7 @@ def collect_results(generate_dir, anomalies, checkpoints):
 
     for anomaly in anomalies:
         for checkpoint in checkpoints:
-            checkpoint_dir = f"{generate_dir}/stage1-{anomaly}-dual/checkpoint-{checkpoint}"
+            checkpoint_dir = f"{generate_dir}/stage2-{anomaly}-dual/checkpoint-{checkpoint}"
 
             # 讀取 IC-LPIPS 結果
             ic_lpips_path = f"{checkpoint_dir}/ic_lpips_results.csv"

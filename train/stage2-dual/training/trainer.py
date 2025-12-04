@@ -271,8 +271,8 @@ class DreamBoothLoRATrainer:
             lora_dropout=self.args.lora_dropout,
             init_lora_weights="gaussian",
             target_modules=[
-                "to_k",
                 "to_q",
+                "to_k",
                 "to_v",
                 "to_out.0",
                 "add_k_proj",
@@ -756,8 +756,10 @@ class DreamBoothLoRATrainer:
                         model_input_fg = pixel_value_fgs
 
                     # Sample noise that we'll add to the latents
-                    noise_blend = torch.randn_like(model_input_blend)
-                    noise_fg = torch.randn_like(model_input_fg)
+                    # Use SHARED noise for spatial alignment between blend and fg
+                    noise = torch.randn_like(model_input_blend)
+                    noise_blend = noise
+                    noise_fg = noise
 
                     bsz, channels, height, width = model_input_blend.shape
                     # Sample a random timestep for each image

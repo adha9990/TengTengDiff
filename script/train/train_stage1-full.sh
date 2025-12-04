@@ -27,9 +27,9 @@ accelerate launch train/stage1-full/train.py \
     --rank 32 \
     --seed 32 \
     --num_inference_steps=25 \
-    --report_to="tensorboard" \
-    --use_dinov2_loss \
-    --dinov2_loss_weight=0.1 \
-    --dinov2_model_name="vitb14" \
-    --dinov2_loss_type="l2" \
-    --dinov2_feature_layers 3 6 9 11
+    --report_to="tensorboard"
+    # --use_dinov2_loss \
+    # --dinov2_loss_weight=0.1 \
+    # --dinov2_model_name="vitb14" \
+    # --dinov2_loss_type="l2" \
+    # --dinov2_feature_layers 3 6 9 11

@@ -8,13 +8,13 @@ export INSTANCE_PROMPT_FG="sks"
 # export ANOMALIES=("crack" "cut")
 export ANOMALIES=("hole" "print")
 
-export CHECKPOINT_STEPS=(1000 2000 3000 4000 5000)
+export CHECKPOINT_STEPS=(6000 7000 8000 9000 10000)
 
 for ANOMALIE in "${ANOMALIES[@]}"; do
     for CHECKPOINT_STEP in "${CHECKPOINT_STEPS[@]}"; do
     
-        export LORA_WEIGHTS="all_generate.2.5k_dino-5k_sme/$MVTEC_NAME/stage1-$ANOMALIE-dual/checkpoint-$CHECKPOINT_STEP"
-        export OUTPUT_DIR="generate_data.2.5k_dino-5k_sme/$MVTEC_NAME/stage1-$ANOMALIE-dual/checkpoint-$CHECKPOINT_STEP"
+        export LORA_WEIGHTS="all_generate/$MVTEC_NAME/stage2-$ANOMALIE-dual_mse/checkpoint-$CHECKPOINT_STEP"
+        export OUTPUT_DIR="generate_data_2_stage_mse/$MVTEC_NAME/stage2-$ANOMALIE-dual/checkpoint-$CHECKPOINT_STEP"
 
         echo "=================================================="
         echo "開始 Stage 2 推理：生成異常圖片"

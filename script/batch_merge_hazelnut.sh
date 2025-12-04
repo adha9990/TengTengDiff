@@ -4,13 +4,13 @@
 # 處理 generate_data/hazelnut 下所有類別的所有 checkpoint
 
 BASE_DIR="/home/bluestar/research/TengTengDiff"
-GENERATE_DIR="${BASE_DIR}/generate_data.2.5k_dino-5k_sme/hazelnut"
+GENERATE_DIR="${BASE_DIR}/generate_data_2_stage_mse/hazelnut"
 
 # 異常類別列表
 ANOMALIES=("crack" "print" "hole" "cut")
 
 # Checkpoint 列表
-CHECKPOINTS=(1000 2000 3000 4000 5000)
+CHECKPOINTS=(6000 7000 8000 9000 10000)
 
 # 計數器
 total_count=0
@@ -29,7 +29,8 @@ for anomaly in "${ANOMALIES[@]}"; do
 
     # 遍歷所有 checkpoint
     for checkpoint in "${CHECKPOINTS[@]}"; do
-        IMAGE_DIR="${GENERATE_DIR}/stage1-${anomaly}-dual/checkpoint-${checkpoint}/image"
+        IMAGE_DIR="${GENERATE_DIR}/stage2-${anomaly}-dual/checkpoint-${checkpoint}/image"
+        echo "圖片路徑: $IMAGE_DIR"
 
         # 檢查目錄是否存在
         if [ ! -d "$IMAGE_DIR" ]; then

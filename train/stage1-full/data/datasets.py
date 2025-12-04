@@ -51,7 +51,7 @@ class DreamBoothDataset(Dataset):
             ):
                 continue
             # For stage 1, we only use 'good' samples from train directory
-            good_path = os.path.join(self.instance_data_root, type_name, "train", "good_segmented")
+            good_path = os.path.join(self.instance_data_root, type_name, "train", "good")
             if os.path.exists(good_path):
                 file_names = os.listdir(good_path)
                 file_names.sort()
@@ -62,7 +62,7 @@ class DreamBoothDataset(Dataset):
                                 self.instance_data_root,
                                 type_name,
                                 "train",
-                                "good_segmented",
+                                "good",
                                 name,
                             )
                         )
