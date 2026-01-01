@@ -3,12 +3,14 @@
 
 export MVTEC_NAME="hazelnut"
 export MODEL_NAME="models/stable-diffusion-v1-5"
-export INSTANCE_PROMPT_BLEND="a vfx with sks"
-export INSTANCE_PROMPT_FG="sks"
 export ANOMALIE="hole"
-export CHECKPOINT_STEP=6000
+export CHECKPOINT_STEP=5000
 
-export LORA_WEIGHTS="all_generate/$MVTEC_NAME/stage2-$ANOMALIE-dual_test/checkpoint-$CHECKPOINT_STEP"
+# 提示詞策略 B：使用更稀有的 token
+export INSTANCE_PROMPT_BLEND="a ohwx with zwx"
+export INSTANCE_PROMPT_FG="zwx"
+
+export LORA_WEIGHTS="all_generate_opt_prompt/$MVTEC_NAME/stage2-$ANOMALIE-dual/checkpoint-$CHECKPOINT_STEP"
 export OUTPUT_DIR="test"
 
 echo "=================================================="

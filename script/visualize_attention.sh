@@ -14,8 +14,10 @@ ANOMALY="hole"  # 例如: "crack", "hole", "scratch" 或留空為 Stage 1
 # 檢查點步
 CHECKPOINT_STEP="5000"  # Stage 1 通常是 5000，Stage 2 通常是 8000
 
-# 提示詞
-PROMPT="a vfx"  # Stage 1: "a vfx", Stage 2: "a vfx with sks"
+# 提示詞策略 B：使用更稀有的 token
+# Stage 1: "a ohwx"
+# Stage 2: "a ohwx with zwx"
+PROMPT="a ohwx"
 
 # Attention 解析度（16 或 32，越大越精細但越慢）
 ATTENTION_RES=16

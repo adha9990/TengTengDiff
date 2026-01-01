@@ -2,7 +2,8 @@ export MODEL_NAME="models/stable-diffusion-v1-5"
 
 export MVTEC_NAME="hazelnut"
 
-export INSTANCE_PROMPT="a vfx"
+# 提示詞策略 B：使用更稀有的 token
+export INSTANCE_PROMPT="a ohwx"
 
 export CHECKPOINT_STEPS=(5000)
 

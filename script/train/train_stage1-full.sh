@@ -5,7 +5,10 @@ export INSTANCE_DIR="datasets/mvtec_ad"
 
 export NAME="hazelnut"
 
-export INSTANCE_PROMPT="a vfx"
+# 提示詞策略 B：使用更稀有的 token 避免語義衝突
+# - ohwx: 完全無語義的稀有 token（替代 vfx）
+# - 原因：vfx 可能與 "visual effects" 有弱關聯
+export INSTANCE_PROMPT="a ohwx"
 
 export OUTPUT_DIR="all_generate/"
 

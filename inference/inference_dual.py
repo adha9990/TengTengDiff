@@ -4,14 +4,21 @@ Dual inference script for simultaneous anomaly image and mask generation.
 Based on DualAnoDiff: https://github.com/yinyjin/DualAnoDiff
 Paper: https://arxiv.org/abs/2408.13509
 
+Prompt Strategy B (Rare Tokens):
+    使用完全無語義的稀有 token，避免與 SD 預訓練知識衝突
+    - prompt_blend: "a ohwx with zwx"
+      ohwx 代表物體外觀（Stage 1 學習），zwx 代表異常特徵
+    - prompt_fg: "zwx"
+      異常前景區域
+
 Usage:
     python inference_dual.py \
         --model_name models/stable-diffusion-v1-5 \
         --lora_weights all_generate/hazelnut/hole/checkpoint-5000 \
         --output_dir generate_data/hazelnut/hole \
         --num_images 100 \
-        --prompt_blend "a vfx with sks" \
-        --prompt_fg "sks"
+        --prompt_blend "a ohwx with zwx" \
+        --prompt_fg "zwx"
 """
 
 import argparse
@@ -56,14 +63,14 @@ def parse_args():
     parser.add_argument(
         "--prompt_blend",
         type=str,
-        default="a vfx with sks",
-        help="Prompt for full anomaly image"
+        required=True,
+        help="Prompt for full anomaly image, e.g., 'a photo of hazelnut with sks hole'"
     )
     parser.add_argument(
         "--prompt_fg",
         type=str,
-        default="sks",
-        help="Prompt for foreground/mask region"
+        required=True,
+        help="Prompt for foreground/mask region, e.g., 'sks hole'"
     )
     parser.add_argument(
         "--num_inference_steps",

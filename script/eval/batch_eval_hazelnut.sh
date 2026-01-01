@@ -4,15 +4,17 @@
 # 評估 generate_data_dino.2k_sme-5kdino/hazelnut 下所有異常類型的所有 checkpoint
 
 BASE_DIR="/home/bluestar/research/TengTengDiff"
-GENERATE_DIR="${BASE_DIR}/generate_data_2_stage_mse/hazelnut"
+GENERATE_DIR="${BASE_DIR}/generate_data_photo_sks_NAME_hta_ANOMALY_mse_dino/hazelnut"
 MVTEC_PATH="${BASE_DIR}/datasets/mvtec_ad"
 GPU="${1:-0}"
 
 # 異常類別列表
 ANOMALIES=("crack" "print" "hole" "cut")
+# ANOMALIES=("hole")
 
 # Checkpoint 列表
-CHECKPOINTS=(6000 7000 8000 9000 10000)
+# CHECKPOINTS=(6000 7000 8000 9000 10000)
+CHECKPOINTS=(1000 2000 3000 4000 5000)
 
 # 計數器
 total_count=0
