@@ -3,14 +3,15 @@
 # 批量執行 merge_images.sh 腳本
 # 處理 generate_data/hazelnut 下所有類別的所有 checkpoint
 
-BASE_DIR="/home/bluestar/research/TengTengDiff"
-GENERATE_DIR="${BASE_DIR}/generate_data_2_stage_mse/hazelnut"
+BASE_DIR="/home/nknul40s/bluestar-research/TengTengDiff"
+GENERATE_DIR="${BASE_DIR}/generate_data_ai_prompt_mse/hazelnut"
 
 # 異常類別列表
 ANOMALIES=("crack" "print" "hole" "cut")
 
 # Checkpoint 列表
-CHECKPOINTS=(6000 7000 8000 9000 10000)
+CHECKPOINTS=(1000 2000 3000 4000 5000)
+# CHECKPOINTS=(6000 7000 8000 9000 10000)
 
 # 計數器
 total_count=0
